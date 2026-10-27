@@ -59,7 +59,7 @@ main{padding:0 16px}
 .lin.toque{cursor:pointer}
 .lin.toque:active{background:var(--campo)}
 .ic{width:30px;height:30px;border-radius:7px;display:grid;place-items:center;color:#fff;font-size:17px;flex:none}
-.ic.azul{background:var(--acc)} .ic.laranja{background:var(--laranja)} .ic.verde{background:var(--ok)} .ic.roxo{background:var(--roxo)} .ic.cinza{background:#8e8e93}
+.ic.azul{background:var(--acc)} .ic.vermelho{background:#ff375f} .ic.laranja{background:var(--laranja)} .ic.verde{background:var(--ok)} .ic.roxo{background:var(--roxo)} .ic.cinza{background:#8e8e93}
 .lin .corpo{flex:1;min-width:0}
 .lin .t{font-size:17px;white-space:nowrap;overflow:hidden;text-overflow:ellipsis}
 .lin .d{font-size:14px;color:var(--mut);margin-top:1px}
@@ -235,6 +235,7 @@ textarea{width:100%;min-height:120px;border:0;background:var(--grupo);color:var(
 const IC = {
   haltere:'<path d="M6.5 6.5v11M17.5 6.5v11M3.5 9v6M20.5 9v6M6.5 12h11"/>',
   grafico:'<path d="M4 19V5M4 19h16M8 15l3.5-4 3 2.5L20 7"/>',
+  corre:'<path d="M13 4.5a1.5 1.5 0 1 0 0-.01M7 21l3-6 3 2v5M10 15l1-5 4 3 3-1M11 10l-3 1-1 3"/>',
   roda:'<circle cx="12" cy="12" r="3"/><path d="M19.4 15a1.65 1.65 0 0 0 .33 1.82l.06.06a2 2 0 1 1-2.83 2.83l-.06-.06a1.65 1.65 0 0 0-1.82-.33 1.65 1.65 0 0 0-1 1.51V21a2 2 0 1 1-4 0v-.09A1.65 1.65 0 0 0 9 19.4a1.65 1.65 0 0 0-1.82.33l-.06.06a2 2 0 1 1-2.83-2.83l.06-.06A1.65 1.65 0 0 0 4.68 15a1.65 1.65 0 0 0-1.51-1H3a2 2 0 1 1 0-4h.09A1.65 1.65 0 0 0 4.6 9a1.65 1.65 0 0 0-.33-1.82l-.06-.06a2 2 0 1 1 2.83-2.83l.06.06A1.65 1.65 0 0 0 9 4.68a1.65 1.65 0 0 0 1-1.51V3a2 2 0 1 1 4 0v.09a1.65 1.65 0 0 0 1 1.51 1.65 1.65 0 0 0 1.82-.33l.06-.06a2 2 0 1 1 2.83 2.83l-.06.06A1.65 1.65 0 0 0 19.4 9a1.65 1.65 0 0 0 1.51 1H21a2 2 0 1 1 0 4h-.09a1.65 1.65 0 0 0-1.51 1z"/>',
   cal:'<rect x="3.5" y="5" width="17" height="15" rx="2.5"/><path d="M3.5 10h17M8 3v4M16 3v4"/>',
   lista:'<path d="M9 6h11M9 12h11M9 18h11M4.5 6h.01M4.5 12h.01M4.5 18h.01"/>',
@@ -519,7 +520,15 @@ function vHoje(){
     <div class="rodape">Para usar quando não houver treino planeado ou sem rede.</div>`;
   return html + `</main>`;
 }
+const fmtRitmo = s => Math.floor(s/60) + ":" + pad(Math.round(s%60));
+const kmTxt = m => fmtKg(Math.round(m/100)/10) + " km";
+function ritmoPrincipal(t){ const p = (t.passos || []).filter(x => x.ritmo).sort((a,b) => b.distancia - a.distancia)[0]; return p ? fmtRitmo(p.ritmo[0]) + "–" + fmtRitmo(p.ritmo[1]) + " /km" : ""; }
 function linhaTreino(t, deHoje){
+  if (t.tipo === "corrida"){
+    const quandoC = t.data && !deHoje ? `<span class="v">${esc(dataRel(t.data))}</span>` : "";
+    return `<div class="lin toque" data-abrir="${esc(t.id)}"><div class="ic vermelho">${ic("corre")}</div><div class="corpo"><div class="t">${esc(t.nome)}${deHoje ? '<span class="pilula verde">Hoje</span>' : ""}</div>
+      <div class="d">${esc([t.distancia ? kmTxt(t.distancia) : "", ritmoPrincipal(t), "no relógio"].filter(Boolean).join(" · "))}</div></div>${quandoC}<div class="chev">${ic("seta")}</div></div>`;
+  }
   const icone = t.origem === "base" ? `<div class="ic ${t.cor}">${ic("lista")}</div>` : `<div class="ic ${deHoje ? "verde" : "azul"}">${ic("cal")}</div>`;
   const quando = t.data && !deHoje ? `<span class="v">${esc(dataRel(t.data))}</span>` : "";
   const sub = (t.sub ? t.sub + " · " : "") + contagem(t);
@@ -530,17 +539,22 @@ async function sincronizar(){
   const c = cfg();
   if (!c.chave){ estadoSync = {msg:"Falta a chave do Intervals.icu nas Definições.", tipo:"err"}; if (vista === "hoje") desenhar(); return; }
   estadoSync = {msg:"A actualizar…", tipo:""}; if (vista === "hoje") desenhar();
-  const ini = hoje(), fim = isoDia(new Date(Date.now() + 7*864e5));
+  const ini = hoje(), fim = isoDia(new Date(Date.now() + 14*864e5));
   const r = await http("GET", `/athlete/{a}/events?oldest=${ini}&newest=${fim}`);
   if (r.status !== 200){ estadoSync = {msg:"Erro " + r.status + ": não foi possível ler o calendário. Verifica a chave nas Definições.", tipo:"err"}; if (vista === "hoje") desenhar(); return; }
   let ev = []; try{ ev = JSON.parse(r.body); }catch(e){}
-  const lista = ev.filter(e => e.category === "WORKOUT" && /weight|strength|for[cç]a/i.test(e.type || ""))
+  const gin = ev.filter(e => e.category === "WORKOUT" && /weight|strength|for[cç]a/i.test(e.type || ""))
     .map(e => { const p = lerDescricao(e.description || (e.workout_doc && e.workout_doc.description) || "");
       return {id:"ev-" + e.id, eventId:e.id, nome:e.name || "Treino de força", data:(e.start_date_local||"").slice(0,10), origem:"intervals", exercicios:p.exercicios, notas:p.notas}; })
-    .filter(t => t.exercicios.length)
-    .sort((a,b) => a.data < b.data ? -1 : 1);
+    .filter(t => t.exercicios.length);
+  const cor = ev.filter(e => e.category === "WORKOUT" && /run/i.test(e.type || "")).map(e => {
+      const rot = String(e.description || "").split(/\r?\n/).map(l => l.trim()).filter(l => l && !/^-/.test(l));
+      const passos = ((e.workout_doc && e.workout_doc.steps) || []).map((s,i) => ({rotulo: rot[i] || ("Passo " + (i+1)), distancia: s.distance || 0, duracao: s.duration || 0,
+        ritmo: s.pace && /secs/.test(s.pace.units || "") ? [s.pace.start, s.pace.end] : null}));
+      return {id:"ev-" + e.id, eventId:e.id, tipo:"corrida", nome:e.name || "Corrida", data:(e.start_date_local||"").slice(0,10), origem:"intervals", distancia:e.distance || 0, tempo:e.moving_time || 0, passos, exercicios:[]}; });
+  const lista = gin.concat(cor).sort((a,b) => a.data < b.data ? -1 : a.data > b.data ? 1 : (a.tipo === "corrida") - (b.tipo === "corrida"));
   LS.set("tg_planos", {data:new Date().toISOString(), lista});
-  estadoSync = {msg: lista.length ? lista.length + " treino(s) de ginásio nos próximos 7 dias." : "Sem treinos de ginásio planeados nos próximos 7 dias.", tipo:"ok"};
+  estadoSync = {msg: lista.length ? gin.length + " treino(s) de ginásio e " + cor.length + " corrida(s) nos próximos 14 dias." : "Sem treinos planeados nos próximos 14 dias.", tipo:"ok"};
   if (vista === "hoje") desenhar();
 }
 let previaId = null;
@@ -548,6 +562,13 @@ const todosTreinos = () => (LS.get("tg_planos", {lista:[]}).lista || []).concat(
 function vPrevia(){
   const t = todosTreinos().find(x => x.id === previaId);
   if (!t){ vista = "hoje"; return vHoje(); }
+  if (t.tipo === "corrida"){
+    return `<div class="barra"><div class="lado"><button class="lnk" id="bvoltp">${ic("voltar")} Treinos</button></div><div class="tit"></div><div class="lado dir"></div></div>
+      <header class="grande" style="padding-top:14px"><h1 style="font-size:30px">${esc(t.nome)}</h1><div class="sub">${esc(dataLonga(t.data))}</div></header><main>
+      <div class="grupo" style="margin-top:12px"><div class="stats"><div><b>${t.distancia ? fmtKg(Math.round(t.distancia/100)/10) : "—"}</b><small>km</small></div><div><b>~${t.tempo ? Math.round(t.tempo/60) : "—"}</b><small>minutos</small></div><div><b>${t.passos.length}</b><small>blocos</small></div></div></div>
+      <div class="sec">Estrutura</div><div class="grupo">${t.passos.map((x,i) => `<div class="lin sem-ic"><div class="corpo"><div class="t">${esc(x.rotulo)}</div><div class="d">${esc(kmTxt(x.distancia))}${x.ritmo ? " a " + fmtRitmo(x.ritmo[0]) + "–" + fmtRitmo(x.ritmo[1]) + " /km" : ""}</div></div><span class="v">${i+1}</span></div>`).join("")}</div>
+      <div class="rodape">Este treino faz-se com o FR965: o Intervals.icu envia-o para o Garmin Connect e aparece no calendário do relógio.</div></main>`;
+  }
   const nS = t.exercicios.reduce((a,e)=>a+e.series.length,0);
   const grupos = [...new Set(t.exercicios.map(e => grupo(e.nome).g))];
   let html = `<div class="barra"><div class="lado"><button class="lnk" id="bvoltp">${ic("voltar")} Treinos</button></div><div class="tit"></div><div class="lado dir"></div></div>
