@@ -5,6 +5,10 @@ import android.content.Context;
 import android.content.pm.PackageInfo;
 import android.content.res.Configuration;
 import android.graphics.Color;
+import android.media.Ringtone;
+import android.media.RingtoneManager;
+import android.os.Handler;
+import android.os.Looper;
 import android.os.Bundle;
 import android.os.VibrationEffect;
 import android.os.Vibrator;
@@ -29,6 +33,8 @@ import java.nio.charset.StandardCharsets;
 public class MainActivity extends Activity {
 
     private WebView web;
+    private final Handler mao = new Handler(Looper.getMainLooper());
+    private Runnable alarme;
 
     @Override
     protected void onCreate(Bundle savedInstanceState) {
@@ -55,6 +61,34 @@ public class MainActivity extends Activity {
         web.addJavascriptInterface(new Ponte(), "Android");
         setContentView(web);
         web.loadUrl("file:///android_asset/index.html");
+    }
+
+    @Override
+    protected void onResume() {
+        super.onResume();
+        if (web != null) {
+            web.evaluateJavascript("window.aoVoltar && window.aoVoltar()", null);
+        }
+    }
+
+    private void tocarAlarme() {
+        try {
+            Vibrator v = (Vibrator) getSystemService(Context.VIBRATOR_SERVICE);
+            if (v != null && v.hasVibrator()) {
+                v.vibrate(VibrationEffect.createWaveform(new long[]{0, 400, 200, 400, 200, 700}, -1));
+            }
+        } catch (Exception e) {
+            // sem vibração
+        }
+        try {
+            Ringtone r = RingtoneManager.getRingtone(this,
+                    RingtoneManager.getDefaultUri(RingtoneManager.TYPE_NOTIFICATION));
+            if (r != null) {
+                r.play();
+            }
+        } catch (Exception e) {
+            // sem som
+        }
     }
 
     @Override
@@ -117,6 +151,27 @@ public class MainActivity extends Activity {
                 }
                 devolver(id, json);
             }).start();
+        }
+
+        @JavascriptInterface
+        public void restAlarm(final int ms) {
+            mao.post(() -> {
+                if (alarme != null) {
+                    mao.removeCallbacks(alarme);
+                }
+                alarme = MainActivity.this::tocarAlarme;
+                mao.postDelayed(alarme, Math.max(0, ms));
+            });
+        }
+
+        @JavascriptInterface
+        public void cancelRestAlarm() {
+            mao.post(() -> {
+                if (alarme != null) {
+                    mao.removeCallbacks(alarme);
+                    alarme = null;
+                }
+            });
         }
 
         @JavascriptInterface

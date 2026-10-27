@@ -666,7 +666,7 @@ async function enviar(id){
     name:"Registo ginásio — " + reg.nome, description:textoRegisto(reg)});
   const ok = r.status >= 200 && r.status < 300;
   if (ok){ const h2 = hist(); const x = h2.find(y => y.id === id); if (x){ x.enviado = true; LS.set("tg_hist", h2); } }
-  envioMsg = ok ? {msg:"Registo enviado para o Intervals.icu.", tipo:"ok"} : {msg:"Erro " + r.status + " ao enviar. Tenta de novo mais tarde.", tipo:"err"};
+  envioMsg = ok ? {msg:"Registo enviado para o Intervals.icu.", tipo:"ok"} : {msg: r.status === 0 ? "Sem rede: o registo fica guardado e é enviado sozinho quando houver ligação." : "Erro " + r.status + " ao enviar. A aplicação volta a tentar sozinha.", tipo:"err"};
   if (vista === "detalhe") desenhar();
 }
 
@@ -677,17 +677,20 @@ function iniciarTimer(seg, rot){
   tTotal = seg; tFim = Date.now() + seg*1000; tAvisou = false;
   $("#tlb").textContent = rot || "Descanso"; $("#timer").classList.add("on"); $("#timer").classList.remove("fim");
   clearInterval(tInt); tInt = setInterval(tick, 250); tick();
+  try{ if (temAndroid() && window.Android.restAlarm) window.Android.restAlarm(seg*1000); }catch(e){}
 }
 function tick(){
   const r = (tFim - Date.now())/1000;
   $("#tt").textContent = r > 0 ? mmss(Math.ceil(r)) : "0:00";
   $("#tseg").textContent = r > 0 ? Math.ceil(r) : "✓";
   $("#arco").setAttribute("stroke-dashoffset", (CIRC * (1 - Math.max(0, r) / tTotal)).toFixed(1));
-  if (r <= 0 && !tAvisou){ tAvisou = true; $("#timer").classList.add("fim"); $("#tlb").textContent = "Próxima série"; vibrar(700); bip(); setTimeout(pararTimer, 4000); }
+  if (r <= 0 && !tAvisou){ tAvisou = true; $("#timer").classList.add("fim"); $("#tlb").textContent = "Próxima série"; if (!(temAndroid() && window.Android.restAlarm)){ vibrar(700); bip(); } setTimeout(pararTimer, 4000); }
   actualizarCrono();
 }
-function pararTimer(){ clearInterval(tInt); tInt = null; $("#timer").classList.remove("on","fim"); }
-$("#tmais").onclick = () => { tFim += 15000; tTotal += 15; if (tAvisou){ tAvisou = false; $("#timer").classList.remove("fim"); } tick(); };
+function pararTimer(){ clearInterval(tInt); tInt = null; $("#timer").classList.remove("on","fim");
+  try{ if (temAndroid() && window.Android.cancelRestAlarm && !tAvisou) window.Android.cancelRestAlarm(); }catch(e){} }
+$("#tmais").onclick = () => { tFim += 15000; tTotal += 15; if (tAvisou){ tAvisou = false; $("#timer").classList.remove("fim"); }
+  try{ if (temAndroid() && window.Android.restAlarm) window.Android.restAlarm(Math.max(0, tFim - Date.now())); }catch(e){} tick(); };
 $("#tsalta").onclick = pararTimer;
 setInterval(() => { if (vista === "sessao" && !tInt) actualizarCrono(); }, 1000);
 
@@ -865,10 +868,19 @@ function ligar(){
   actualizarCrono();
 }
 
+/* ---------- registos por enviar (ginásio sem rede) ---------- */
+let aEnviar = false;
+async function enviarPendentes(){
+  if (aEnviar || !cfg().chave) return;
+  aEnviar = true;
+  try{ for (const r of hist().filter(x => !x.enviado)) await enviar(r.id); } finally { aEnviar = false; }
+}
+window.aoVoltar = function(){ if (tInt) tick(); enviarPendentes(); };
+
 /* ---------- arranque ---------- */
 if (LS.get("tg_ativa", null)){ vista = "sessao"; ecraLigado(true); }
 desenhar();
-if (cfg().chave) sincronizar();
+if (cfg().chave){ sincronizar(); enviarPendentes(); }
 </script>
 </body>
 </html>
