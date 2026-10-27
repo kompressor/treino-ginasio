@@ -155,6 +155,25 @@ textarea{width:100%;min-height:120px;border:0;background:var(--grupo);color:var(
 @media (prefers-reduced-motion: reduce){.anim img.b{animation:none;opacity:0}}
 .anim.p{width:56px;height:56px}
 .lin.cf + .lin.cf::before{left:80px}
+.palco{margin-top:12px;border-radius:16px;overflow:hidden;box-shadow:var(--sombra)}
+.anim.g{width:100%;aspect-ratio:3/2;border-radius:0;cursor:default}
+.sem-foto{width:100%;aspect-ratio:3/2;display:grid;place-items:center;color:#fff;font-size:44px;font-weight:800;letter-spacing:1px}
+.ex-info{display:flex;align-items:flex-start;gap:10px;padding:14px 4px 10px}
+.ex-info .corpo{flex:1;min-width:0}
+.ex-info .ord{font-size:12px;font-weight:600;color:var(--acc);text-transform:uppercase;letter-spacing:.4px}
+.ex-info h3{margin:2px 0 2px;font-size:24px;font-weight:700;letter-spacing:-.4px;line-height:1.15;text-wrap:balance}
+.ex-info .g{font-size:14px;color:var(--mut)}
+.ex-info .feito{color:var(--ok);font-size:26px;display:flex;padding-top:16px}
+.faixa{display:flex;gap:8px;overflow-x:auto;padding:12px 2px 4px;scrollbar-width:none}
+.faixa::-webkit-scrollbar{display:none}
+.fx{position:relative;flex:none;border:0;background:none;padding:0;border-radius:12px;cursor:pointer;outline:none;opacity:.55;transition:opacity .15s}
+.fx .anim,.fx .mus{width:52px;height:52px;cursor:pointer}
+.fx.on{opacity:1}
+.fx.on .anim,.fx.on .mus{box-shadow:0 0 0 2.5px var(--acc)}
+.fx.ok{opacity:.9}
+.fx-ok{position:absolute;right:-3px;top:-3px;width:20px;height:20px;border-radius:50%;background:var(--ok);color:#fff;display:grid;place-items:center;font-size:12px;border:2px solid var(--bg)}
+.navex{display:grid;grid-template-columns:1fr 1fr;gap:10px;margin-top:20px}
+.navex .btn:disabled{opacity:.4}
 .anim.m{width:88px;height:66px}
 .anim .tag{position:absolute;left:4px;bottom:4px;font-size:10px;font-weight:700;color:#fff;padding:1px 5px;border-radius:5px;z-index:2}
 #zoom{position:fixed;inset:0;z-index:20;background:rgba(0,0,0,.55);-webkit-backdrop-filter:blur(14px);backdrop-filter:blur(14px);display:none;align-items:center;justify-content:center;padding:24px max(16px,env(safe-area-inset-right,0px)) 24px max(16px,env(safe-area-inset-left,0px))}
@@ -342,21 +361,21 @@ function lerDescricao(txt){
 }
 
 /* ---------- treinos de base (sem internet) ---------- */
-function mk(nome, n, reps, desc, unid){ const s = []; for (let i = 0; i < n; i++) s.push({reps, unid:unid||"reps", kg:null, descanso:desc}); return {nome, series:s}; }
+function mk(nome, n, reps, desc, kg){ const s = []; for (let i = 0; i < n; i++) s.push({reps, unid:"reps", kg:kg == null ? null : kg, descanso:desc}); return {nome, series:s}; }
 const BASE = [
   {id:"base-joelho-a", nome:"Joelho A", sub:"Pernas e abdominais", cor:"laranja", origem:"base", exercicios:[
-    mk("Prensa de pernas",3,12,90), mk("Extensão de pernas",3,12,75), mk("Flexão de pernas na máquina",3,12,75),
-    mk("Abdução de anca na máquina",2,15,60), mk("Adução de anca na máquina",2,15,60), mk("Gémeos sentado",3,15,45),
-    mk("Abdominais na máquina",3,15,45), mk("Crunch inverso",2,12,45)],
+    mk("Prensa de pernas",3,12,90,85), mk("Extensão de pernas",3,12,75,50), mk("Flexão de pernas na máquina",3,12,75,35),
+    mk("Abdução de anca na máquina",2,15,60,45), mk("Adução de anca na máquina",2,15,60,40), mk("Gémeos sentado",3,15,45,30),
+    mk("Abdominais na máquina",3,15,45,25), mk("Crunch inverso",2,12,45)],
     notas:"Aquecimento: 5 min de bicicleta estática. Carga moderada: as últimas 2 repetições custam, mas sem dor no joelho."},
   {id:"base-joelho-b", nome:"Joelho B", sub:"Pernas e abdominais", cor:"laranja", origem:"base", exercicios:[
-    mk("Prensa de pernas (pés altos)",3,10,90), mk("Peso morto romeno com halteres",3,10,90), mk("Extensão de pernas (descida lenta)",3,12,75),
-    mk("Flexão de pernas sentado",3,12,75), mk("Gémeos sentado",3,15,45), mk("Abdominais na máquina",3,15,45), mk("Elevação de joelhos em suspensão",2,10,45)],
+    mk("Prensa de pernas (pés altos)",3,10,90,90), mk("Peso morto romeno com halteres",3,10,90,14), mk("Extensão de pernas (descida lenta)",3,12,75,50),
+    mk("Flexão de pernas sentado",3,12,75,35), mk("Gémeos sentado",3,15,45,30), mk("Abdominais na máquina",3,15,45,25), mk("Elevação de joelhos em suspensão",2,10,45)],
     notas:"Aquecimento: 5 min de bicicleta estática. Na extensão de pernas, descer em 3 segundos."},
   {id:"base-superiores", nome:"Superiores", sub:"Tronco, braços e abdominais", cor:"roxo", origem:"base", exercicios:[
-    mk("Supino na máquina",3,10,75), mk("Remada sentada na máquina",3,12,75), mk("Puxada vertical",3,10,75),
-    mk("Press de ombros na máquina",2,12,60), mk("Curl martelo com halteres",2,12,45), mk("Curl de bíceps na polia",2,12,45),
-    mk("Extensão de tríceps na polia",2,12,45), mk("Extensão de tríceps acima da cabeça na polia",2,12,45), mk("Abdominais na máquina",3,15,45)],
+    mk("Supino na máquina",3,10,75,35), mk("Remada sentada na máquina",3,12,75,45), mk("Puxada vertical",3,10,75,40),
+    mk("Press de ombros na máquina",2,12,60,20), mk("Curl martelo com halteres",2,12,45,10), mk("Curl de bíceps na polia",2,12,45,15),
+    mk("Extensão de tríceps na polia",2,12,45,20), mk("Extensão de tríceps acima da cabeça na polia",2,12,45,15), mk("Abdominais na máquina",3,15,45,25)],
     notas:"Aquecimento: 5 min de bicicleta estática. Se o cotovelo doer no lado de dentro, baixar a carga ou trocar o exercício."}
 ];
 
@@ -410,11 +429,11 @@ const FOTOS = [
 ];
 function foto(nome){ const n = norm(nome); for (const [re, id] of FOTOS) if (re.test(n)) return id; return null; }
 const srcFoto = (id, i) => (window.__IMG && window.__IMG[id]) ? window.__IMG[id][i] : "ex/" + id + "_" + i + ".jpg";
-function animEx(nome, tam){
+function animEx(nome, tam, semZoom){
   const id = foto(nome);
-  if (!id) return musIc(nome);
+  if (!id) return tam === "g" ? `<div class="sem-foto" style="background:${grupo(nome).c}">${grupo(nome).s}</div>` : musIc(nome);
   const g = grupo(nome);
-  return `<div class="anim ${tam}" data-zoom="${esc(nome)}"><img src="${srcFoto(id,0)}" alt="" loading="lazy"><img class="b" src="${srcFoto(id,1)}" alt="" loading="lazy">${tam === "m" ? `<span class="tag" style="background:${g.c}">${g.s}</span>` : ""}</div>`;
+  return `<div class="anim ${tam}" ${semZoom ? "" : `data-zoom="${esc(nome)}"`}><img src="${srcFoto(id,0)}" alt="" loading="lazy"><img class="b" src="${srcFoto(id,1)}" alt="" loading="lazy">${tam === "m" ? `<span class="tag" style="background:${g.c}">${g.s}</span>` : ""}</div>`;
 }
 function abrirZoom(nome){
   const z = $("#zoom"); const g = grupo(nome); const id = foto(nome); if (!id) return;
@@ -542,7 +561,7 @@ function vPrevia(){
 }
 function abrirTreino(id){
   const t = todosTreinos().find(x => x.id === id); if (!t) return;
-  const sessao = {id:"s" + Date.now(), inicio:Date.now(), nome:t.nome + (t.sub && t.origem === "base" ? " — " + t.sub : ""), planoId:t.id, eventId:t.eventId || null, notas:t.notas || "",
+  const sessao = {id:"s" + Date.now(), inicio:Date.now(), atual:0, nome:t.nome + (t.sub && t.origem === "base" ? " — " + t.sub : ""), planoId:t.id, eventId:t.eventId || null, notas:t.notas || "",
     exercicios: t.exercicios.map(e => {
       const u = ultimaVez(e.nome);
       return {nome:e.nome, series: e.series.map((s,i) => {
@@ -560,31 +579,39 @@ function vSessao(){
   if (!s){ vista = "hoje"; return vHoje(); }
   const feitas = s.exercicios.reduce((a,e)=>a+e.series.filter(x=>x.feito).length,0);
   const total = s.exercicios.reduce((a,e)=>a+e.series.length,0);
+  const ei = Math.min(Math.max(s.atual || 0, 0), s.exercicios.length - 1);
+  const e = s.exercicios[ei], u = ultimaVez(e.nome), g = grupo(e.nome);
+  const tudo = e.series.length && e.series.every(x => x.feito);
+  const prox = s.exercicios[ei+1];
   let html = `<div class="barra"><div class="lado"><button class="lnk perigo" id="bcanc">Cancelar</button></div>
     <div class="tit">${esc(s.nome.split(" — ")[0])}</div><div class="lado dir"><button class="lnk forte" id="bfim">Terminar</button></div></div><main>
     <div class="progresso"><i style="width:${total ? Math.round(feitas/total*100) : 0}%"></i></div>
-    <div class="rodape" style="display:flex;justify-content:space-between;margin:6px 4px 0"><span>${feitas} de ${total} séries</span><span class="crono" id="crono"></span></div>`;
-  if (s.notas) html += `<div class="grupo" style="margin-top:16px"><div class="notas">${esc(s.notas)}</div></div>`;
-  s.exercicios.forEach((e, ei) => {
-    const u = ultimaVez(e.nome);
-    const tudo = e.series.length && e.series.every(x => x.feito);
-    const g = grupo(e.nome);
-    html += `<div class="grupo" style="margin-top:16px"><div class="ex-cab">${animEx(e.nome,"m")}<div class="corpo"><h3>${esc(e.nome)}</h3><div class="g">${esc(g.g)}${u ? " · anterior " + esc(dataCurta(u.data)) : " · primeira vez"}</div></div>${tudo ? `<span class="feito">${ic("certoc")}</span>` : ""}</div>
-      <div class="cab-ser"><span>Sér.</span><span>Anterior</span><span>kg</span><span>${e.series[0] && e.series[0].unid === "s" ? "Seg." : "Reps"}</span><span></span></div>`;
-    e.series.forEach((x, si) => {
-      const a = u ? u.series[si] : null;
-      const antTxt = a ? (a.kg != null ? fmtKg(a.kg) + " × " : "") + a.reps : "—";
-      html += `<div class="serie ${x.feito ? "ok" : ""}"><div class="n">${si+1}</div>
-        <button class="ant" ${a ? `data-ant="${ei}-${si}" data-akg="${a.kg == null ? "" : a.kg}" data-arp="${a.reps}"` : "disabled"} aria-label="Copiar série anterior">${esc(antTxt)}</button>
-        <div class="campo"><input inputmode="decimal" id="kg-${ei}-${si}" data-kg="${ei}-${si}" value="${esc(fmtKg(x.kg))}" placeholder="—" aria-label="Carga em kg"></div>
-        <div class="campo"><input inputmode="numeric" id="rp-${ei}-${si}" data-rp="${ei}-${si}" value="${x.reps}" aria-label="Repetições"></div>
-        <button class="chk" data-ok="${ei}-${si}" aria-label="Série feita">${ic("certo")}</button></div>`;
-    });
-    html += `<div class="addser"><button class="lnk" data-add="${ei}">${ic("mais")} Adicionar série</button></div></div>`;
+    <div class="rodape" style="display:flex;justify-content:space-between;margin:6px 4px 0"><span>${feitas} de ${total} séries</span><span class="crono" id="crono"></span></div>
+    <div class="faixa" id="faixa">${s.exercicios.map((x,i) => { const ok = x.series.length && x.series.every(y=>y.feito);
+      return `<button class="fx ${i===ei?"on":""} ${ok?"ok":""}" data-ir="${i}" aria-label="${esc(x.nome)}">${animEx(x.nome,"p",true)}${ok ? `<span class="fx-ok">${ic("certo")}</span>` : ""}</button>`; }).join("")}</div>
+    <div class="palco">${animEx(e.nome,"g",true)}</div>
+    <div class="ex-info"><div class="corpo"><div class="ord">Exercício ${ei+1} de ${s.exercicios.length} · ${esc(g.g)}</div><h3>${esc(e.nome)}</h3>
+      <div class="g">${u ? "Última vez, " + esc(dataCurta(u.data)) + ": " + esc(resumoCurto(u.series)) : "Primeira vez com este exercício"}</div></div>${tudo ? `<span class="feito">${ic("certoc")}</span>` : ""}</div>
+    <div class="grupo"><div class="cab-ser"><span>Sér.</span><span>Anterior</span><span>kg</span><span>${e.series[0] && e.series[0].unid === "s" ? "Seg." : "Reps"}</span><span></span></div>`;
+  e.series.forEach((x, si) => {
+    const a = u ? u.series[si] : null;
+    const antTxt = a ? (a.kg != null ? fmtKg(a.kg) + " × " : "") + a.reps : "—";
+    html += `<div class="serie ${x.feito ? "ok" : ""}"><div class="n">${si+1}</div>
+      <button class="ant" ${a ? `data-ant="${ei}-${si}" data-akg="${a.kg == null ? "" : a.kg}" data-arp="${a.reps}"` : "disabled"} aria-label="Copiar série anterior">${esc(antTxt)}</button>
+      <div class="campo"><input inputmode="decimal" id="kg-${ei}-${si}" data-kg="${ei}-${si}" value="${esc(fmtKg(x.kg))}" placeholder="—" aria-label="Carga em kg"></div>
+      <div class="campo"><input inputmode="numeric" id="rp-${ei}-${si}" data-rp="${ei}-${si}" value="${x.reps}" aria-label="Repetições"></div>
+      <button class="chk" data-ok="${ei}-${si}" aria-label="Série feita">${ic("certo")}</button></div>`;
   });
-  html += `<div style="height:20px"></div><button class="btn pri" id="bfim2">Terminar treino</button><div style="height:110px"></div></main>`;
+  html += `<div class="addser"><button class="lnk" data-add="${ei}">${ic("mais")} Adicionar série</button></div></div>`;
+  if (s.notas && ei === 0) html += `<div class="grupo" style="margin-top:12px"><div class="notas">${esc(s.notas)}</div></div>`;
+  html += `<div class="sec">${prox ? "A seguir" : "Fim do treino"}</div>`;
+  html += prox ? `<div class="grupo"><div class="lin toque cf" data-ir="${ei+1}" style="padding-left:12px">${animEx(prox.nome,"m",true)}<div class="corpo"><div class="t" style="white-space:normal">${esc(prox.nome)}</div><div class="d">${esc(grupo(prox.nome).g)} · ${esc(resumoPlano(prox))}</div></div><div class="chev">${ic("seta")}</div></div></div>`
+    : `<div class="grupo"><div class="lin sem-ic"><div class="corpo"><div class="t">Último exercício</div><div class="d">Quando acabares, carrega em Terminar treino.</div></div></div></div>`;
+  html += `<div class="navex"><button class="btn" id="bant" ${ei === 0 ? "disabled" : ""}>${ic("voltar")} Anterior</button>${prox ? `<button class="btn pri" id="bseg">Seguinte ${ic("seta")}</button>` : `<button class="btn pri" id="bfim2">Terminar treino</button>`}</div><div style="height:110px"></div></main>`;
   return html;
 }
+function irExercicio(i){ const x = LS.get("tg_ativa"); if (!x) return; x.atual = Math.min(Math.max(i,0), x.exercicios.length-1); guardarAtiva(x); desenhar(); window.scrollTo(0,0);
+  const f = document.querySelector(".fx.on"); if (f && f.scrollIntoView) f.scrollIntoView({inline:"center", block:"nearest"}); }
 function guardarAtiva(s){ LS.set("tg_ativa", s); }
 function actualizarCrono(){
   const s = LS.get("tg_ativa", null), el = $("#crono");
@@ -802,9 +829,14 @@ function ligar(){
       const ultimaDoEx = b === x.exercicios[a].series.length - 1;
       const prox = ultimaDoEx ? (x.exercicios[a+1] ? "A seguir: " + x.exercicios[a+1].nome : "Último exercício feito") : "Série " + (b+2) + " · " + x.exercicios[a].nome;
       iniciarTimer(sr.descanso || 60, prox);
+      if (x.exercicios[a].series.every(z => z.feito) && x.exercicios[a+1]){ x.atual = a + 1; guardarAtiva(x); desenhar(); window.scrollTo(0,0);
+        const f = document.querySelector(".fx.on"); if (f && f.scrollIntoView) f.scrollIntoView({inline:"center", block:"nearest"}); return; }
     }
     const y = window.scrollY; desenhar(); window.scrollTo(0, y);
   });
+  document.querySelectorAll("[data-ir]").forEach(el => el.onclick = () => irExercicio(+el.dataset.ir));
+  on0("#bant", () => { const x = LS.get("tg_ativa"); irExercicio((x.atual||0) - 1); });
+  on0("#bseg", () => { const x = LS.get("tg_ativa"); irExercicio((x.atual||0) + 1); });
   document.querySelectorAll("[data-ant]").forEach(el => el.onclick = () => { const [a,b] = par(el.dataset.ant); const x = LS.get("tg_ativa"); const sr = x.exercicios[a].series[b];
     if (el.dataset.akg !== "") sr.kg = numPT(el.dataset.akg); sr.reps = parseInt(el.dataset.arp,10) || sr.reps; guardarAtiva(x); const y = window.scrollY; desenhar(); window.scrollTo(0, y); });
   document.querySelectorAll("[data-add]").forEach(el => el.onclick = () => { const a = +el.dataset.add; const x = LS.get("tg_ativa"); const ss = x.exercicios[a].series; const l = ss[ss.length-1] || {reps:10,unid:"reps",kg:null,descanso:60};
