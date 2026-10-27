@@ -365,18 +365,19 @@ function lerDescricao(txt){
 function mk(nome, n, reps, desc, kg){ const s = []; for (let i = 0; i < n; i++) s.push({reps, unid:"reps", kg:kg == null ? null : kg, descanso:desc}); return {nome, series:s}; }
 const BASE = [
   {id:"base-joelho-a", nome:"Joelho A", sub:"Pernas e abdominais", cor:"laranja", origem:"base", exercicios:[
-    mk("Prensa de pernas",3,12,90,85), mk("Extensão de pernas",3,12,75,50), mk("Flexão de pernas na máquina",3,12,75,35),
-    mk("Abdução de anca na máquina",2,15,60,45), mk("Adução de anca na máquina",2,15,60,40), mk("Gémeos sentado",3,15,45,30),
-    mk("Abdominais na máquina",3,15,45,25), mk("Crunch inverso",2,12,45)],
-    notas:"Aquecimento: 5 min de bicicleta estática. Carga moderada: as últimas 2 repetições custam, mas sem dor no joelho."},
+    mk("Prensa de pernas",3,12,90,65), mk("Extensão de pernas",3,12,75,60), mk("Flexão de pernas na máquina",3,12,75,35),
+    mk("Extensão de anca na máquina",3,12,60,30), mk("Abdução de anca na máquina",2,15,60,60), mk("Adução de anca na máquina",2,15,60,50),
+    mk("Gémeos sentado",3,15,45,40), mk("Abdominais",3,20,45)],
+    notas:"Aquecimento: 5 min de bicicleta estática. Cargas dos teus treinos no Garmin (outubro). Se houver dor no joelho, baixa ou pára."},
   {id:"base-joelho-b", nome:"Joelho B", sub:"Pernas e abdominais", cor:"laranja", origem:"base", exercicios:[
-    mk("Prensa de pernas (pés altos)",3,10,90,90), mk("Peso morto romeno com halteres",3,10,90,14), mk("Extensão de pernas (descida lenta)",3,12,75,50),
-    mk("Flexão de pernas sentado",3,12,75,35), mk("Gémeos sentado",3,15,45,30), mk("Abdominais na máquina",3,15,45,25), mk("Elevação de joelhos em suspensão",2,10,45)],
+    mk("Prensa de pernas (pés altos)",3,10,90,70), mk("Peso morto romeno",3,10,90,40), mk("Extensão de pernas (descida lenta)",3,12,75,55),
+    mk("Flexão de pernas sentado",3,12,75,35), mk("Gémeos sentado",3,15,45,40), mk("Abdominais",3,20,45), mk("Elevação de joelhos em suspensão",2,10,45)],
     notas:"Aquecimento: 5 min de bicicleta estática. Na extensão de pernas, descer em 3 segundos."},
   {id:"base-superiores", nome:"Superiores", sub:"Tronco, braços e abdominais", cor:"roxo", origem:"base", exercicios:[
-    mk("Supino na máquina",3,10,75,35), mk("Remada sentada na máquina",3,12,75,45), mk("Puxada vertical",3,10,75,40),
-    mk("Press de ombros na máquina",2,12,60,20), mk("Curl martelo com halteres",2,12,45,10), mk("Curl de bíceps na polia",2,12,45,15),
-    mk("Extensão de tríceps na polia",2,12,45,20), mk("Extensão de tríceps acima da cabeça na polia",2,12,45,15), mk("Abdominais na máquina",3,15,45,25)],
+    mk("Aberturas na máquina",3,12,75,25), mk("Remada sentada na máquina",3,12,75,40), mk("Encolhimentos com halteres",3,12,60,35),
+    mk("Press de ombros na máquina",2,12,60,15), mk("Elevação lateral com halteres",2,12,45,5), mk("Curl martelo com halteres",2,12,45,12.5),
+    mk("Curl de bíceps na polia",2,12,45,12.5), mk("Extensão de tríceps na polia",2,12,45,20), mk("Extensão de tríceps acima da cabeça na polia",2,12,45,15),
+    mk("Abdominais",2,15,45)],
     notas:"Aquecimento: 5 min de bicicleta estática. Se o cotovelo doer no lado de dentro, baixar a carga ou trocar o exercício."}
 ];
 
@@ -385,13 +386,14 @@ const GRUPOS = [
   [/abdomin|crunch|eleva[cç][aã]o de joelhos|eleva[cç][aã]o de pernas/, "Abdominais", "AB", "#ff9500"],
   [/g[eé]meos|panturrilha/, "Gémeos", "GM", "#a2845e"],
   [/flex[aã]o de pernas|isquio|peso morto|romeno/, "Isquiotibiais", "IS", "#ff2d55"],
-  [/abdu[cç][aã]o|ponte|gl[uú]te/, "Glúteos", "GL", "#af52de"],
+  [/abdu[cç][aã]o|ponte|gl[uú]te|extensao de anca/, "Glúteos", "GL", "#af52de"],
+  [/encolhimento/, "Trapézio", "TP", "#34c759"],
   [/adu[cç][aã]o/, "Adutores", "AD", "#5856d6"],
   [/prensa|extens[aã]o de pernas|agachamento|leg press/, "Quadricípite", "QD", "#ff3b30"],
   [/b[ií]ceps|curl/, "Bíceps", "BI", "#30b0c7"],
   [/tr[ií]ceps/, "Tríceps", "TR", "#32ade6"],
   [/ombro|lateral|press de ombros|desenvolvimento/, "Ombros", "OM", "#ffcc00"],
-  [/supino|peito|peitoral|crucifixo|chest/, "Peito", "PE", "#007aff"],
+  [/supino|peito|peitoral|crucifixo|chest|aberturas|peck|borboleta/, "Peito", "PE", "#007aff"],
   [/remada|puxada|costas|dorsal|pull/, "Costas", "CO", "#34c759"],
   [/prancha|bird|pallof|core/, "Core", "CR", "#ff9500"]
 ];
@@ -405,6 +407,9 @@ const FOTOS = [
   [/abducao/, "thigh_abductor"], [/aducao/, "thigh_adductor"],
   [/gemeos/, "seated_calf_raise"],
   [/abdominais na maquina|crunch na maquina/, "ab_crunch_machine"],
+  [/encolhimento/, "dumbbell_shrug"],
+  [/extensao de anca|extensao de quadril|coice/, "one-legged_cable_kickback"],
+  [/^abdominais$|abdominais no solo|crunch$/, "crunches"],
   [/crunch inverso/, "reverse_crunch"],
   [/elevacao de (joelhos|pernas)/, "hanging_leg_raise"],
   [/peso morto romeno com halteres|peso morto com halteres/, "stiff-legged_dumbbell_deadlift"],
