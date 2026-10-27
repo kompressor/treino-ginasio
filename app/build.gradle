@@ -1,0 +1,44 @@
+plugins {
+    id 'com.android.application'
+}
+
+def numero = (System.getenv("GITHUB_RUN_NUMBER") ?: "1").toInteger()
+
+android {
+    namespace 'pt.jorge.treino'
+    compileSdk 34
+
+    defaultConfig {
+        applicationId 'pt.jorge.treino'
+        minSdk 26
+        targetSdk 34
+        versionCode numero
+        versionName "1.0." + numero
+    }
+
+    signingConfigs {
+        assinatura {
+            storeFile file('assinatura.keystore')
+            storePassword 'treinoginasio'
+            keyAlias 'treino'
+            keyPassword 'treinoginasio'
+        }
+    }
+
+    buildTypes {
+        release {
+            minifyEnabled false
+            signingConfig signingConfigs.assinatura
+        }
+    }
+
+    compileOptions {
+        sourceCompatibility JavaVersion.VERSION_17
+        targetCompatibility JavaVersion.VERSION_17
+    }
+
+    lint {
+        abortOnError false
+        checkReleaseBuilds false
+    }
+}

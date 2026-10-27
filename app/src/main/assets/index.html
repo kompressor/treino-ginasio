@@ -1,0 +1,518 @@
+<!doctype html>
+<html lang="pt-PT">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1, viewport-fit=cover">
+<title>Treino Ginásio</title>
+<style>
+:root{
+  --bg:#0f1214; --card:#1a1f23; --card2:#232a30; --line:#2e363d;
+  --txt:#eef2f4; --mut:#93a1ab; --acc:#ff7a1a; --acc2:#ffb26b;
+  --ok:#3ccf7a; --err:#ff5a5a; --r:14px;
+}
+*{box-sizing:border-box;-webkit-tap-highlight-color:transparent}
+html,body{margin:0;background:var(--bg);color:var(--txt);font:16px/1.4 system-ui,-apple-system,"Segoe UI",Roboto,sans-serif}
+body{padding-bottom:84px}
+header{padding:18px 16px 8px}
+header h1{margin:0;font-size:22px;letter-spacing:.2px}
+header .sub{color:var(--mut);font-size:14px;margin-top:2px}
+main{padding:0 16px}
+h2{font-size:13px;text-transform:uppercase;letter-spacing:1.2px;color:var(--mut);margin:22px 0 8px}
+.card{background:var(--card);border:1px solid var(--line);border-radius:var(--r);padding:14px;margin-bottom:10px}
+.treino{display:flex;align-items:center;gap:12px;cursor:pointer}
+.treino .ic{width:42px;height:42px;border-radius:12px;background:var(--card2);display:grid;place-items:center;font-size:20px;flex:none}
+.treino .t{font-weight:600}
+.treino .d{color:var(--mut);font-size:13px}
+.treino .seta{margin-left:auto;color:var(--mut);font-size:22px}
+.tag{display:inline-block;font-size:11px;padding:2px 7px;border-radius:20px;background:var(--card2);color:var(--acc2);margin-left:6px;vertical-align:middle}
+.tag.hoje{background:var(--acc);color:#111}
+button{font:inherit;border:0;border-radius:12px;padding:12px 16px;background:var(--card2);color:var(--txt);cursor:pointer}
+button.pri{background:var(--acc);color:#111;font-weight:700}
+button.full{width:100%}
+button:disabled{opacity:.5}
+.row{display:flex;gap:8px;align-items:center}
+.msg{color:var(--mut);font-size:14px;padding:6px 2px}
+.msg.err{color:var(--err)}
+.msg.ok{color:var(--ok)}
+nav{position:fixed;left:0;right:0;bottom:0;display:flex;background:#13171a;border-top:1px solid var(--line);padding-bottom:env(safe-area-inset-bottom)}
+nav button{flex:1;background:none;border-radius:0;padding:12px 4px 14px;color:var(--mut);font-size:13px}
+nav button b{display:block;font-size:20px;font-weight:400}
+nav button.on{color:var(--acc)}
+/* sessão */
+.ex h3{margin:0 0 2px;font-size:17px}
+.ex .ult{color:var(--mut);font-size:13px;margin-bottom:8px}
+.ex.feito{border-color:#2d5a40}
+.serie{display:grid;grid-template-columns:26px 1fr 1fr 52px;gap:8px;align-items:center;margin-top:8px}
+.serie .n{color:var(--mut);font-weight:700;text-align:center}
+.campo{position:relative}
+.campo input{width:100%;background:var(--bg);border:1px solid var(--line);color:var(--txt);border-radius:10px;padding:11px 34px 11px 10px;font-size:18px;font-weight:600}
+.campo span{position:absolute;right:10px;top:50%;transform:translateY(-50%);color:var(--mut);font-size:13px}
+.chk{height:46px;border-radius:10px;background:var(--card2);font-size:20px;padding:0}
+.serie.ok .chk{background:var(--ok);color:#06210f}
+.serie.ok input{border-color:#2d5a40;color:var(--ok)}
+.addser{background:none;color:var(--acc2);padding:10px 0 0;font-size:14px}
+.notas{white-space:pre-wrap;color:var(--mut);font-size:14px}
+#timer{position:fixed;left:12px;right:12px;bottom:92px;background:var(--acc);color:#111;border-radius:16px;padding:12px 14px;display:none;align-items:center;gap:10px;box-shadow:0 8px 30px #0008;z-index:5}
+#timer.on{display:flex}
+#timer .tt{font-size:30px;font-weight:800;font-variant-numeric:tabular-nums;min-width:86px}
+#timer .lb{font-size:13px;font-weight:600;flex:1;line-height:1.2}
+#timer button{background:#0002;color:#111;padding:10px 12px;font-weight:700}
+#timer.fim{background:var(--ok)}
+.topo{display:flex;align-items:center;gap:10px;padding:14px 16px 4px}
+.topo button{padding:8px 12px}
+.topo .tit{font-weight:700;font-size:18px;flex:1}
+.crono{color:var(--mut);font-variant-numeric:tabular-nums}
+label{display:block;color:var(--mut);font-size:14px;margin:12px 0 6px}
+input.txt,select,textarea{width:100%;background:var(--bg);border:1px solid var(--line);color:var(--txt);border-radius:10px;padding:12px;font:inherit}
+textarea{min-height:140px;font-size:12px;font-family:monospace}
+.hist .t{font-weight:600}
+.hist .d{color:var(--mut);font-size:13px}
+.stat{display:flex;gap:10px;margin:10px 0}
+.stat div{flex:1;background:var(--card2);border-radius:12px;padding:10px;text-align:center}
+.stat b{display:block;font-size:22px}
+.stat small{color:var(--mut)}
+svg text{fill:var(--mut);font-size:11px}
+.lista-ex{font-size:14px;color:var(--mut);margin-top:6px}
+.lista-ex div{padding:3px 0;border-top:1px solid var(--line)}
+.lista-ex div:first-child{border-top:0}
+.lista-ex b{color:var(--txt);font-weight:600}
+</style>
+</head>
+<body>
+<div id="app"></div>
+<div id="timer"><div class="tt" id="tt">0:00</div><div class="lb" id="tlb">Descanso</div><button id="tmais">+15 s</button><button id="tsalta">Saltar</button></div>
+<nav id="nav">
+  <button data-v="hoje" class="on"><b>🏋️</b>Treinos</button>
+  <button data-v="hist"><b>📈</b>Histórico</button>
+  <button data-v="def"><b>⚙️</b>Definições</button>
+</nav>
+<script>
+"use strict";
+/* ---------- armazenamento ---------- */
+const LS = {
+  get(k, d){ try{ const v = localStorage.getItem(k); return v ? JSON.parse(v) : d; }catch(e){ return d; } },
+  set(k, v){ try{ localStorage.setItem(k, JSON.stringify(v)); }catch(e){} }
+};
+const cfg = () => LS.get("tg_cfg", {chave:"", atleta:"0"});
+
+/* ---------- utilitários ---------- */
+const $ = s => document.querySelector(s);
+const esc = s => String(s == null ? "" : s).replace(/[&<>"]/g, c => ({"&":"&amp;","<":"&lt;",">":"&gt;",'"':"&quot;"}[c]));
+const pad = n => String(n).padStart(2, "0");
+const isoDia = d => d.getFullYear() + "-" + pad(d.getMonth()+1) + "-" + pad(d.getDate());
+const hoje = () => isoDia(new Date());
+const DIAS = ["domingo","segunda-feira","terça-feira","quarta-feira","quinta-feira","sexta-feira","sábado"];
+const MESES = ["janeiro","fevereiro","março","abril","maio","junho","julho","agosto","setembro","outubro","novembro","dezembro"];
+function dataLonga(iso){ const d = new Date(iso.slice(0,10) + "T12:00:00"); return DIAS[d.getDay()] + ", " + d.getDate() + " de " + MESES[d.getMonth()]; }
+function dataCurta(iso){ const d = new Date(iso.slice(0,10) + "T12:00:00"); return pad(d.getDate()) + "/" + pad(d.getMonth()+1); }
+const fmtKg = k => (k == null || k === "") ? "" : String(Math.round(Number(k)*100)/100).replace(".", ",");
+const numPT = v => { if (v == null) return null; const n = parseFloat(String(v).replace(",", ".")); return isNaN(n) ? null : n; };
+const mmss = s => { s = Math.max(0, Math.round(s)); return Math.floor(s/60) + ":" + pad(s%60); };
+const norm = s => String(s).toLowerCase().normalize("NFD").replace(/[̀-ͯ]/g, "").trim();
+
+/* ---------- ponte Android ---------- */
+const temAndroid = () => typeof window.Android !== "undefined";
+const pendentes = {};
+window.__httpCb = function(id, res){ const p = pendentes[id]; if (!p) return; delete pendentes[id]; let r; try{ r = JSON.parse(res); }catch(e){ r = {status:0, body:String(res)}; } p(r); };
+function http(metodo, caminho, corpo){
+  const c = cfg();
+  const url = "https://intervals.icu/api/v1" + caminho.replace("{a}", encodeURIComponent(c.atleta || "0"));
+  const body = corpo ? JSON.stringify(corpo) : "";
+  return new Promise(resolve => {
+    if (temAndroid()){
+      const id = "h" + Date.now() + Math.random().toString(36).slice(2);
+      pendentes[id] = resolve;
+      window.Android.http(id, metodo, url, c.chave || "", body);
+    } else {
+      fetch(url, {method:metodo, headers:{"Authorization":"Basic " + btoa("API_KEY:" + (c.chave||"")), "Content-Type":"application/json"}, body: corpo ? body : undefined})
+        .then(r => r.text().then(t => resolve({status:r.status, body:t})))
+        .catch(e => resolve({status:0, body:String(e)}));
+    }
+  });
+}
+function vibrar(ms){ try{ if (temAndroid()) window.Android.vibrate(ms); else if (navigator.vibrate) navigator.vibrate(ms); }catch(e){} }
+function ecraLigado(on){ try{ if (temAndroid()) window.Android.keepScreenOn(!!on); }catch(e){} }
+let actx = null;
+function bip(){
+  try{
+    actx = actx || new (window.AudioContext || window.webkitAudioContext)();
+    [0, 0.25, 0.5].forEach(t => {
+      const o = actx.createOscillator(), g = actx.createGain();
+      o.frequency.value = 880; o.connect(g); g.connect(actx.destination);
+      g.gain.setValueAtTime(0.25, actx.currentTime + t);
+      g.gain.exponentialRampToValueAtTime(0.001, actx.currentTime + t + 0.2);
+      o.start(actx.currentTime + t); o.stop(actx.currentTime + t + 0.22);
+    });
+  }catch(e){}
+}
+
+/* ---------- leitura dos treinos do Intervals.icu ---------- */
+/* Formato 1 (principal):
+   Série 1 — Prensa de pernas — 12 reps — 80 kg
+   Descanso — 90 s
+   Formato 2 (alternativo): Prensa de pernas | 3x12 | 80 kg | 90 s */
+function lerDescricao(txt){
+  const exs = [], notas = [];
+  let ultima = null;
+  const pega = nome => {
+    let e = exs.length ? exs[exs.length-1] : null;
+    if (!e || norm(e.nome) !== norm(nome)){ e = {nome:nome.trim(), series:[]}; exs.push(e); }
+    return e;
+  };
+  const kgDe = s => { const m = /([\d]+(?:[.,]\d+)?)\s*kg/i.exec(s || ""); return m ? numPT(m[1]) : null; };
+  String(txt || "").split(/\r?\n/).forEach(l0 => {
+    const l = l0.trim();
+    if (!l || /^\[SLIPSTREAM/i.test(l)) return;
+    let m = /^s[ée]rie\s*\d*\s+[—–-]\s+(.+?)\s+[—–-]\s+(\d+)\s*(reps?|repeti\S*|s|seg\S*|")\s*(?:[—–-]\s+(.*))?$/i.exec(l);
+    if (m){
+      const e = pega(m[1]);
+      ultima = {reps:+m[2], unid: /^(s|seg|")/i.test(m[3]) ? "s" : "reps", kg: kgDe(m[4]), descanso:60};
+      e.series.push(ultima); return;
+    }
+    m = /^descanso\s+[—–-]\s+(\d+)\s*(s|seg|min)/i.exec(l);
+    if (m){ if (ultima) ultima.descanso = /^min/i.test(m[2]) ? +m[1]*60 : +m[1]; return; }
+    if (l.indexOf("|") > 0){
+      const p = l.split("|").map(x => x.trim());
+      const sr = /(\d+)\s*[x×]\s*(\d+)\s*(s|seg)?/i.exec(p[1] || "");
+      if (p[0] && sr){
+        const e = pega(p[0]);
+        const desc = /(\d+)\s*(s|seg|min)/i.exec(p[3] || "");
+        const d = desc ? (/^min/i.test(desc[2]) ? +desc[1]*60 : +desc[1]) : 60;
+        for (let i = 0; i < +sr[1]; i++){ ultima = {reps:+sr[2], unid: sr[3] ? "s" : "reps", kg: kgDe(p[2]), descanso:d}; e.series.push(ultima); }
+        return;
+      }
+    }
+    if (/^treino de for/i.test(l)) return;
+    notas.push(l);
+  });
+  return {exercicios:exs, notas:notas.join("\n")};
+}
+
+/* ---------- treinos de base (sem internet) ---------- */
+function mk(nome, n, reps, desc, unid){ const s = []; for (let i = 0; i < n; i++) s.push({reps, unid:unid||"reps", kg:null, descanso:desc}); return {nome, series:s}; }
+const BASE = [
+  {id:"base-joelho-a", nome:"Joelho A — pernas e abdominais", origem:"base", exercicios:[
+    mk("Prensa de pernas",3,12,90), mk("Extensão de pernas",3,12,75), mk("Flexão de pernas na máquina",3,12,75),
+    mk("Abdução de anca na máquina",2,15,60), mk("Adução de anca na máquina",2,15,60), mk("Gémeos sentado",3,15,45),
+    mk("Abdominais na máquina",3,15,45), mk("Crunch inverso",2,12,45)],
+    notas:"Aquecimento: 5 min de bicicleta estática. Carga moderada: as últimas 2 repetições custam, mas sem dor no joelho."},
+  {id:"base-joelho-b", nome:"Joelho B — pernas e abdominais", origem:"base", exercicios:[
+    mk("Prensa de pernas (pés altos)",3,10,90), mk("Peso morto romeno com halteres",3,10,90), mk("Extensão de pernas (descida lenta)",3,12,75),
+    mk("Flexão de pernas sentado",3,12,75), mk("Gémeos sentado",3,15,45), mk("Abdominais na máquina",3,15,45), mk("Elevação de joelhos em suspensão",2,10,45)],
+    notas:"Aquecimento: 5 min de bicicleta estática. Na extensão de pernas, descer em 3 segundos."},
+  {id:"base-superiores", nome:"Superiores e abdominais", origem:"base", exercicios:[
+    mk("Supino na máquina",3,10,75), mk("Remada sentada na máquina",3,12,75), mk("Puxada vertical",3,10,75),
+    mk("Press de ombros na máquina",2,12,60), mk("Curl martelo com halteres",2,12,45), mk("Curl de bíceps na polia",2,12,45),
+    mk("Extensão de tríceps na polia",2,12,45), mk("Extensão de tríceps acima da cabeça na polia",2,12,45), mk("Abdominais na máquina",3,15,45)],
+    notas:"Aquecimento: 5 min de bicicleta estática. Se o cotovelo doer no lado de dentro, baixar a carga ou trocar o exercício."}
+];
+
+/* ---------- histórico ---------- */
+const hist = () => LS.get("tg_hist", []);
+function ultimaVez(nome){
+  const h = hist(); const n = norm(nome);
+  for (let i = h.length - 1; i >= 0; i--){
+    const e = h[i].exercicios.find(x => norm(x.nome) === n);
+    if (e){ const feitas = e.series.filter(s => s.feito); if (feitas.length) return {data:h[i].data, series:feitas}; }
+  }
+  return null;
+}
+function resumoSeries(series){
+  return series.map(s => (s.kg != null ? fmtKg(s.kg) + "×" : "") + s.reps + (s.unid === "s" ? " s" : "")).join(", ");
+}
+
+/* ---------- estado e navegação ---------- */
+let vista = "hoje", treinoAberto = null;
+let estadoSync = {msg:"", tipo:""};
+document.querySelectorAll("#nav button").forEach(b => b.onclick = () => irPara(b.dataset.v));
+function irPara(v){
+  if (LS.get("tg_ativa", null) && v === "hoje"){ vista = "sessao"; }
+  else vista = v;
+  document.querySelectorAll("#nav button").forEach(b => b.classList.toggle("on", b.dataset.v === (vista === "sessao" ? "hoje" : vista)));
+  desenhar(); window.scrollTo(0,0);
+}
+window.voltar = function(){
+  if (vista === "detalhe"){ irPara("hist"); return true; }
+  if (vista !== "hoje" && vista !== "sessao"){ irPara("hoje"); return true; }
+  return false;
+};
+function desenhar(){
+  const app = $("#app");
+  if (vista === "hoje") app.innerHTML = vHoje();
+  else if (vista === "sessao") app.innerHTML = vSessao();
+  else if (vista === "hist") app.innerHTML = vHist();
+  else if (vista === "detalhe") app.innerHTML = vDetalhe();
+  else app.innerHTML = vDef();
+  ligar();
+}
+
+/* ---------- vista: treinos ---------- */
+function vHoje(){
+  const cache = LS.get("tg_planos", {data:null, lista:[]});
+  const h = hoje();
+  const doIntervals = cache.lista || [];
+  const deHoje = doIntervals.filter(t => t.data === h);
+  const prox = doIntervals.filter(t => t.data > h);
+  const feitosHoje = hist().filter(s => s.data.slice(0,10) === h);
+  let html = `<header><h1>Treino Ginásio</h1><div class="sub">${esc(dataLonga(h))}</div></header><main>`;
+  if (feitosHoje.length) html += `<div class="card"><span class="msg ok">✓ Treino de hoje registado: ${esc(feitosHoje.map(s=>s.nome).join(", "))}</span></div>`;
+  html += `<h2>Planeado para hoje</h2>`;
+  if (deHoje.length) html += deHoje.map(t => cartao(t, "hoje")).join("");
+  else html += `<div class="card msg">Nada planeado para hoje${cfg().chave ? "" : " (configura a ligação ao Intervals.icu nas Definições)"}.</div>`;
+  html += `<button class="full" id="bsync">⟳ Actualizar do Intervals.icu</button>`;
+  if (estadoSync.msg) html += `<div class="msg ${estadoSync.tipo}">${esc(estadoSync.msg)}</div>`;
+  if (prox.length){ html += `<h2>Próximos dias</h2>` + prox.map(t => cartao(t, "")).join(""); }
+  html += `<h2>Treinos de base</h2>` + BASE.map(t => cartao(t, "")).join("");
+  return html + `</main>`;
+}
+function cartao(t, marca){
+  const nEx = t.exercicios.length, nS = t.exercicios.reduce((a,e)=>a+e.series.length,0);
+  const quando = t.data ? (marca === "hoje" ? `<span class="tag hoje">hoje</span>` : `<span class="tag">${esc(dataCurta(t.data))}</span>`) : "";
+  return `<div class="card treino" data-abrir="${esc(t.id)}"><div class="ic">${t.origem === "base" ? "📋" : "🗓️"}</div>
+    <div><div class="t">${esc(t.nome)}${quando}</div><div class="d">${nEx} exercícios · ${nS} séries</div></div><div class="seta">›</div></div>`;
+}
+async function sincronizar(){
+  const c = cfg();
+  if (!c.chave){ estadoSync = {msg:"Falta a chave do Intervals.icu nas Definições.", tipo:"err"}; desenhar(); return; }
+  estadoSync = {msg:"A actualizar…", tipo:""}; desenhar();
+  const ini = hoje(), fim = isoDia(new Date(Date.now() + 7*864e5));
+  const r = await http("GET", `/athlete/{a}/events?oldest=${ini}&newest=${fim}`);
+  if (r.status !== 200){ estadoSync = {msg:"Erro " + r.status + ": não foi possível ler o calendário. Verifica a chave.", tipo:"err"}; desenhar(); return; }
+  let ev = []; try{ ev = JSON.parse(r.body); }catch(e){}
+  const lista = ev.filter(e => e.category === "WORKOUT" && /weight|strength|for[cç]a/i.test(e.type || ""))
+    .map(e => { const p = lerDescricao(e.description || (e.workout_doc && e.workout_doc.description) || "");
+      return {id:"ev-" + e.id, eventId:e.id, nome:e.name || "Treino de força", data:(e.start_date_local||"").slice(0,10), origem:"intervals", exercicios:p.exercicios, notas:p.notas}; })
+    .filter(t => t.exercicios.length)
+    .sort((a,b) => a.data < b.data ? -1 : 1);
+  LS.set("tg_planos", {data:new Date().toISOString(), lista});
+  estadoSync = {msg: lista.length ? `${lista.length} treino(s) de ginásio nos próximos 7 dias.` : "Sem treinos de ginásio planeados nos próximos 7 dias.", tipo:"ok"};
+  desenhar();
+}
+function abrirTreino(id){
+  const todos = (LS.get("tg_planos", {lista:[]}).lista || []).concat(BASE);
+  const t = todos.find(x => x.id === id); if (!t) return;
+  const sessao = {id:"s" + Date.now(), inicio:Date.now(), nome:t.nome, planoId:t.id, eventId:t.eventId || null, notas:t.notas || "",
+    exercicios: t.exercicios.map(e => {
+      const u = ultimaVez(e.nome);
+      return {nome:e.nome, series: e.series.map((s,i) => {
+        const ref = u ? (u.series[i] || u.series[u.series.length-1]) : null;
+        const kg = s.kg != null ? s.kg : (ref ? ref.kg : null);
+        return {reps:s.reps, unid:s.unid, kg, descanso:s.descanso, feito:false};
+      })};
+    })};
+  LS.set("tg_ativa", sessao); ecraLigado(true); irPara("hoje");
+}
+
+/* ---------- vista: sessão ---------- */
+let relogio = null;
+function vSessao(){
+  const s = LS.get("tg_ativa", null);
+  if (!s){ vista = "hoje"; return vHoje(); }
+  const feitas = s.exercicios.reduce((a,e)=>a+e.series.filter(x=>x.feito).length,0);
+  const total = s.exercicios.reduce((a,e)=>a+e.series.length,0);
+  let html = `<div class="topo"><button id="bcanc">✕</button><div class="tit">${esc(s.nome)}</div><div class="crono" id="crono"></div></div><main>
+    <div class="msg">${feitas} de ${total} séries feitas</div>`;
+  if (s.notas) html += `<div class="card notas">${esc(s.notas)}</div>`;
+  s.exercicios.forEach((e, ei) => {
+    const u = ultimaVez(e.nome);
+    const tudo = e.series.length && e.series.every(x => x.feito);
+    html += `<div class="card ex ${tudo ? "feito" : ""}"><h3>${esc(e.nome)}</h3>
+      <div class="ult">${u ? "Última vez (" + esc(dataCurta(u.data)) + "): " + esc(resumoSeries(u.series)) : "Primeira vez — escolhe uma carga moderada."}</div>`;
+    e.series.forEach((x, si) => {
+      html += `<div class="serie ${x.feito ? "ok" : ""}"><div class="n">${si+1}</div>
+        <div class="campo"><input inputmode="decimal" data-kg="${ei}-${si}" value="${esc(fmtKg(x.kg))}" placeholder="—"><span>kg</span></div>
+        <div class="campo"><input inputmode="numeric" data-rp="${ei}-${si}" value="${x.reps}"><span>${x.unid === "s" ? "seg" : "rep"}</span></div>
+        <button class="chk" data-ok="${ei}-${si}">${x.feito ? "✓" : "○"}</button></div>`;
+    });
+    html += `<button class="addser" data-add="${ei}">+ série</button></div>`;
+  });
+  html += `<button class="pri full" id="bfim">Terminar treino</button><div style="height:110px"></div></main>`;
+  return html;
+}
+function guardarAtiva(s){ LS.set("tg_ativa", s); }
+function actualizarCrono(){
+  const s = LS.get("tg_ativa", null), el = $("#crono");
+  if (s && el) el.textContent = mmss((Date.now() - s.inicio)/1000);
+}
+async function terminar(){
+  const s = LS.get("tg_ativa", null); if (!s) return;
+  const feitas = s.exercicios.reduce((a,e)=>a+e.series.filter(x=>x.feito).length,0);
+  if (!feitas){ if (confirm("Nenhuma série marcada. Descartar este treino?")) descartar(); return; }
+  if (!confirm("Terminar e guardar o treino?")) return;
+  const reg = {id:s.id, data:new Date(s.inicio).toISOString(), nome:s.nome, eventId:s.eventId,
+    duracaoMin: Math.round((Date.now() - s.inicio)/60000),
+    exercicios: s.exercicios.map(e => ({nome:e.nome, series:e.series.map(x => ({reps:x.reps, unid:x.unid, kg:x.kg, feito:x.feito}))})), enviado:false};
+  const h = hist(); h.push(reg); LS.set("tg_hist", h);
+  localStorage.removeItem("tg_ativa"); pararTimer(); ecraLigado(false);
+  vista = "detalhe"; detalheId = reg.id; desenhar();
+  if (cfg().chave) enviar(reg.id);
+}
+function descartar(){ localStorage.removeItem("tg_ativa"); pararTimer(); ecraLigado(false); irPara("hoje"); }
+function textoRegisto(reg){
+  const linhas = ["REGISTO DE GINÁSIO — " + reg.nome, "Duração: " + reg.duracaoMin + " min"];
+  reg.exercicios.forEach(e => { const f = e.series.filter(s => s.feito); if (f.length) linhas.push(e.nome + ": " + resumoSeries(f)); });
+  const nao = reg.exercicios.filter(e => !e.series.some(s => s.feito)).map(e => e.nome);
+  if (nao.length) linhas.push("Não feitos: " + nao.join(", "));
+  return linhas.join("\n");
+}
+async function enviar(id){
+  const h = hist(); const reg = h.find(x => x.id === id); if (!reg) return;
+  envioMsg = {msg:"A enviar para o Intervals.icu…", tipo:""}; if (vista === "detalhe") desenhar();
+  const r = await http("POST", "/athlete/{a}/events", {category:"NOTE", start_date_local: reg.data.slice(0,10) + "T00:00:00",
+    name:"Registo ginásio — " + reg.nome, description:textoRegisto(reg)});
+  const ok = r.status >= 200 && r.status < 300;
+  if (ok){ const h2 = hist(); const x = h2.find(y => y.id === id); if (x){ x.enviado = true; LS.set("tg_hist", h2); } }
+  envioMsg = ok ? {msg:"✓ Registo enviado para o Intervals.icu.", tipo:"ok"} : {msg:"Erro " + r.status + " ao enviar. Tenta de novo mais tarde.", tipo:"err"};
+  if (vista === "detalhe") desenhar();
+}
+
+/* ---------- cronómetro de descanso ---------- */
+let tFim = 0, tInt = null, tAvisou = false;
+function iniciarTimer(seg, rot){
+  tFim = Date.now() + seg*1000; tAvisou = false;
+  $("#tlb").textContent = rot || "Descanso"; $("#timer").classList.add("on"); $("#timer").classList.remove("fim");
+  clearInterval(tInt); tInt = setInterval(tick, 250); tick();
+}
+function tick(){
+  const r = (tFim - Date.now())/1000;
+  $("#tt").textContent = mmss(Math.ceil(r));
+  if (r <= 0 && !tAvisou){ tAvisou = true; $("#timer").classList.add("fim"); $("#tlb").textContent = "Próxima série!"; vibrar(700); bip(); setTimeout(pararTimer, 4000); }
+  actualizarCrono();
+}
+function pararTimer(){ clearInterval(tInt); tInt = null; $("#timer").classList.remove("on","fim"); }
+$("#tmais").onclick = () => { tFim += 15000; if (tAvisou){ tAvisou = false; $("#timer").classList.remove("fim"); } tick(); };
+$("#tsalta").onclick = pararTimer;
+setInterval(() => { if (vista === "sessao" && !tInt) actualizarCrono(); }, 1000);
+
+/* ---------- vista: histórico ---------- */
+let detalheId = null, envioMsg = {msg:"", tipo:""}, exGraf = "";
+function volume(reg){ return reg.exercicios.reduce((a,e)=>a+e.series.filter(s=>s.feito && s.unid !== "s").reduce((b,s)=>b+(s.kg||0)*s.reps,0),0); }
+function vHist(){
+  const h = hist().slice().reverse();
+  let html = `<header><h1>Histórico</h1><div class="sub">${h.length} treino(s) registado(s)</div></header><main>`;
+  const nomes = [...new Set(hist().flatMap(r => r.exercicios.filter(e => e.series.some(s => s.feito && s.kg != null)).map(e => e.nome)))].sort((a,b)=>a.localeCompare(b,"pt"));
+  if (nomes.length){
+    if (!exGraf || !nomes.includes(exGraf)) exGraf = nomes[0];
+    html += `<h2>Evolução da carga</h2><div class="card"><select id="selex">${nomes.map(n => `<option ${n===exGraf?"selected":""}>${esc(n)}</option>`).join("")}</select>${grafico(exGraf)}</div>`;
+  }
+  html += `<h2>Treinos</h2>`;
+  if (!h.length) html += `<div class="card msg">Ainda sem treinos registados.</div>`;
+  html += h.map(r => `<div class="card treino hist" data-det="${esc(r.id)}"><div class="ic">${r.enviado ? "✅" : "💾"}</div>
+    <div><div class="t">${esc(r.nome)}</div><div class="d">${esc(dataLonga(r.data))} · ${r.duracaoMin} min · ${Math.round(volume(r))} kg levantados</div></div><div class="seta">›</div></div>`).join("");
+  return html + `</main>`;
+}
+function grafico(nome){
+  const n = norm(nome);
+  const pts = hist().map(r => { const e = r.exercicios.find(x => norm(x.nome) === n); if (!e) return null;
+    const ks = e.series.filter(s => s.feito && s.kg != null).map(s => s.kg); return ks.length ? {d:r.data, k:Math.max(...ks)} : null; }).filter(Boolean);
+  if (!pts.length) return `<div class="msg">Sem dados.</div>`;
+  const W = 320, H = 150, P = 30;
+  const ks = pts.map(p => p.k), mn = Math.min(...ks), mx = Math.max(...ks), amp = (mx - mn) || 1;
+  const x = i => pts.length === 1 ? W/2 : P + i*(W - P - 12)/(pts.length - 1);
+  const y = k => H - 22 - (k - mn)/amp*(H - 44);
+  const linha = pts.map((p,i) => (i ? "L" : "M") + x(i).toFixed(1) + " " + y(p.k).toFixed(1)).join(" ");
+  const ult = pts[pts.length-1], pri = pts[0];
+  return `<div class="stat"><div><b>${fmtKg(ult.k)}</b><small>kg (última)</small></div><div><b>${fmtKg(mx)}</b><small>kg (máxima)</small></div><div><b>${(ult.k-pri.k>=0?"+":"")}${fmtKg(ult.k-pri.k)}</b><small>kg (evolução)</small></div></div>
+  <svg viewBox="0 0 ${W} ${H}" width="100%"><line x1="${P}" x2="${W-6}" y1="${H-22}" y2="${H-22}" stroke="#2e363d"/>
+  <text x="2" y="${y(mx)+4}">${fmtKg(mx)}</text><text x="2" y="${y(mn)+4}">${fmtKg(mn)}</text>
+  <path d="${linha}" fill="none" stroke="#ff7a1a" stroke-width="2.5" stroke-linejoin="round"/>
+  ${pts.map((p,i) => `<circle cx="${x(i)}" cy="${y(p.k)}" r="3.5" fill="#ff7a1a"/>`).join("")}
+  <text x="${P}" y="${H-6}">${dataCurta(pri.d)}</text><text x="${W-40}" y="${H-6}">${dataCurta(ult.d)}</text></svg>`;
+}
+function vDetalhe(){
+  const r = hist().find(x => x.id === detalheId);
+  if (!r){ vista = "hist"; return vHist(); }
+  let html = `<div class="topo"><button id="bvolt">‹</button><div class="tit">${esc(r.nome)}</div></div><main>
+    <div class="msg">${esc(dataLonga(r.data))} · ${r.duracaoMin} min</div>
+    <div class="stat"><div><b>${r.exercicios.reduce((a,e)=>a+e.series.filter(s=>s.feito).length,0)}</b><small>séries</small></div><div><b>${Math.round(volume(r))}</b><small>kg levantados</small></div></div>
+    <div class="card lista-ex">${r.exercicios.map(e => { const f = e.series.filter(s=>s.feito); return `<div><b>${esc(e.nome)}</b><br>${f.length ? esc(resumoSeries(f)) : "não feito"}</div>`; }).join("")}</div>`;
+  if (envioMsg.msg) html += `<div class="msg ${envioMsg.tipo}">${esc(envioMsg.msg)}</div>`;
+  if (!r.enviado && cfg().chave) html += `<button class="full" id="benv">Enviar registo para o Intervals.icu</button>`;
+  return html + `<div style="height:10px"></div><button class="full" id="bapag">Apagar este registo</button></main>`;
+}
+
+/* ---------- vista: definições ---------- */
+let defMsg = {msg:"", tipo:""};
+function vDef(){
+  const c = cfg();
+  return `<header><h1>Definições</h1><div class="sub">Ligação ao Intervals.icu</div></header><main>
+  <div class="card">
+    <label>Chave da API do Intervals.icu</label>
+    <input class="txt" id="ichave" type="password" autocomplete="off" value="${esc(c.chave)}" placeholder="Settings → Developer Settings → API Key">
+    <label>ID de atleta (deixa 0)</label>
+    <input class="txt" id="iatl" value="${esc(c.atleta || "0")}">
+    <div style="height:12px"></div>
+    <button class="pri full" id="bgrav">Guardar e testar ligação</button>
+    ${defMsg.msg ? `<div class="msg ${defMsg.tipo}">${esc(defMsg.msg)}</div>` : ""}
+  </div>
+  <h2>Cópia de segurança</h2>
+  <div class="card">
+    <div class="msg">O histórico fica guardado só neste telemóvel. Copia este texto para um lugar seguro, ou cola aqui uma cópia antiga e carrega em Repor.</div>
+    <textarea id="tback">${esc(JSON.stringify(hist()))}</textarea>
+    <div style="height:8px"></div><button class="full" id="brepor">Repor a partir do texto</button>
+  </div>
+  <div class="msg" style="text-align:center">Treino Ginásio · versão ${esc(versao())}</div></main>`;
+}
+function versao(){ try{ return temAndroid() ? window.Android.version() : "web"; }catch(e){ return "?"; } }
+
+/* ---------- eventos ---------- */
+function ligar(){
+  document.querySelectorAll("[data-abrir]").forEach(el => el.onclick = () => abrirTreino(el.dataset.abrir));
+  document.querySelectorAll("[data-det]").forEach(el => el.onclick = () => { detalheId = el.dataset.det; envioMsg = {msg:"",tipo:""}; vista = "detalhe"; desenhar(); window.scrollTo(0,0); });
+  const on = (id, f) => { const el = $(id); if (el) el.onclick = f; };
+  on("#bsync", sincronizar);
+  on("#bfim", terminar);
+  on("#bcanc", () => { if (confirm("Sair e descartar este treino?")) descartar(); });
+  on("#bvolt", () => irPara("hist"));
+  on("#benv", () => enviar(detalheId));
+  on("#bapag", () => { if (!confirm("Apagar este registo do histórico?")) return; LS.set("tg_hist", hist().filter(x => x.id !== detalheId)); irPara("hist"); });
+  const sel = $("#selex"); if (sel) sel.onchange = () => { exGraf = sel.value; desenhar(); };
+  on("#bgrav", async () => {
+    LS.set("tg_cfg", {chave:$("#ichave").value.trim(), atleta:($("#iatl").value.trim() || "0")});
+    if (!cfg().chave){ defMsg = {msg:"Guardado sem chave: só os treinos de base ficam disponíveis.", tipo:""}; desenhar(); return; }
+    defMsg = {msg:"A testar…", tipo:""}; desenhar();
+    const r = await http("GET", "/athlete/{a}");
+    let nome = ""; try{ nome = JSON.parse(r.body).name || ""; }catch(e){}
+    defMsg = r.status === 200 ? {msg:"✓ Ligação feita" + (nome ? " — " + nome : "") + ".", tipo:"ok"} : {msg:"Erro " + r.status + ": chave ou ID de atleta inválidos.", tipo:"err"};
+    desenhar();
+  });
+  on("#brepor", () => {
+    let d; try{ d = JSON.parse($("#tback").value); }catch(e){ alert("Texto inválido."); return; }
+    if (!Array.isArray(d)){ alert("Texto inválido."); return; }
+    if (!confirm("Substituir o histórico actual por " + d.length + " treino(s)?")) return;
+    LS.set("tg_hist", d); alert("Histórico reposto."); desenhar();
+  });
+  /* sessão */
+  const s = LS.get("tg_ativa", null);
+  if (vista !== "sessao" || !s) return;
+  const par = v => v.split("-").map(Number);
+  document.querySelectorAll("[data-kg]").forEach(el => el.onchange = () => { const [a,b] = par(el.dataset.kg); const x = LS.get("tg_ativa"); x.exercicios[a].series[b].kg = numPT(el.value);
+    for (let i = b+1; i < x.exercicios[a].series.length; i++){ const y = x.exercicios[a].series[i]; if (!y.feito && (y.kg == null)) y.kg = numPT(el.value); }
+    guardarAtiva(x); });
+  document.querySelectorAll("[data-rp]").forEach(el => el.onchange = () => { const [a,b] = par(el.dataset.rp); const x = LS.get("tg_ativa"); const n = parseInt(el.value,10); if (!isNaN(n)) x.exercicios[a].series[b].reps = n; guardarAtiva(x); });
+  document.querySelectorAll("[data-ok]").forEach(el => el.onclick = () => {
+    const [a,b] = par(el.dataset.ok); const x = LS.get("tg_ativa"); const sr = x.exercicios[a].series[b];
+    const ik = document.querySelector(`[data-kg="${a}-${b}"]`), ir = document.querySelector(`[data-rp="${a}-${b}"]`);
+    sr.kg = numPT(ik.value); const n = parseInt(ir.value,10); if (!isNaN(n)) sr.reps = n;
+    sr.feito = !sr.feito;
+    if (sr.feito){ const nx = x.exercicios[a].series[b+1]; if (nx && !nx.feito && nx.kg == null) nx.kg = sr.kg; }
+    guardarAtiva(x);
+    if (sr.feito){
+      const ultimaDoEx = b === x.exercicios[a].series.length - 1;
+      const prox = ultimaDoEx ? (x.exercicios[a+1] ? "A seguir: " + x.exercicios[a+1].nome : "Último exercício feito") : "Série " + (b+2) + " de " + x.exercicios[a].nome;
+      iniciarTimer(sr.descanso || 60, prox);
+    }
+    const y = window.scrollY; desenhar(); window.scrollTo(0, y);
+  });
+  document.querySelectorAll("[data-add]").forEach(el => el.onclick = () => { const a = +el.dataset.add; const x = LS.get("tg_ativa"); const ss = x.exercicios[a].series; const l = ss[ss.length-1] || {reps:10,unid:"reps",kg:null,descanso:60};
+    ss.push({reps:l.reps, unid:l.unid, kg:l.kg, descanso:l.descanso, feito:false}); guardarAtiva(x); const y = window.scrollY; desenhar(); window.scrollTo(0, y); });
+  actualizarCrono();
+}
+
+/* ---------- arranque ---------- */
+if (LS.get("tg_ativa", null)){ vista = "sessao"; ecraLigado(true); }
+desenhar();
+if (cfg().chave) sincronizar();
+</script>
+</body>
+</html>
