@@ -3,11 +3,13 @@ package pt.jorge.treino;
 import android.app.Activity;
 import android.content.Context;
 import android.content.pm.PackageInfo;
+import android.content.res.Configuration;
 import android.graphics.Color;
 import android.os.Bundle;
 import android.os.VibrationEffect;
 import android.os.Vibrator;
 import android.util.Base64;
+import android.view.View;
 import android.view.WindowManager;
 import android.webkit.JavascriptInterface;
 import android.webkit.WebChromeClient;
@@ -31,11 +33,18 @@ public class MainActivity extends Activity {
     @Override
     protected void onCreate(Bundle savedInstanceState) {
         super.onCreate(savedInstanceState);
-        getWindow().setStatusBarColor(Color.parseColor("#0f1214"));
-        getWindow().setNavigationBarColor(Color.parseColor("#13171a"));
+        boolean escuro = (getResources().getConfiguration().uiMode
+                & Configuration.UI_MODE_NIGHT_MASK) == Configuration.UI_MODE_NIGHT_YES;
+        int fundo = Color.parseColor(escuro ? "#000000" : "#f2f2f7");
+        getWindow().setStatusBarColor(fundo);
+        getWindow().setNavigationBarColor(fundo);
+        if (!escuro) {
+            getWindow().getDecorView().setSystemUiVisibility(
+                    View.SYSTEM_UI_FLAG_LIGHT_STATUS_BAR | View.SYSTEM_UI_FLAG_LIGHT_NAVIGATION_BAR);
+        }
 
         web = new WebView(this);
-        web.setBackgroundColor(Color.parseColor("#0f1214"));
+        web.setBackgroundColor(fundo);
         WebSettings s = web.getSettings();
         s.setJavaScriptEnabled(true);
         s.setDomStorageEnabled(true);
