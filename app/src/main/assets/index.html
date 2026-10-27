@@ -147,6 +147,24 @@ textarea{width:100%;min-height:120px;border:0;background:var(--grupo);color:var(
 .versao{text-align:center;color:var(--mut);font-size:13px;margin:26px 0 8px}
 
 .mostra{margin-top:10px}
+/* imagens animadas dos exercícios (duas posições alternadas) */
+.anim{position:relative;flex:none;border-radius:10px;overflow:hidden;background:#fff;cursor:zoom-in}
+.anim img{position:absolute;inset:0;width:100%;height:100%;object-fit:cover;display:block}
+.anim img.b{animation:mov 2.4s ease-in-out infinite}
+@keyframes mov{0%,42%{opacity:0}50%,92%{opacity:1}100%{opacity:0}}
+@media (prefers-reduced-motion: reduce){.anim img.b{animation:none;opacity:0}}
+.anim.p{width:56px;height:56px}
+.lin.cf + .lin.cf::before{left:80px}
+.anim.m{width:88px;height:66px}
+.anim .tag{position:absolute;left:4px;bottom:4px;font-size:10px;font-weight:700;color:#fff;padding:1px 5px;border-radius:5px;z-index:2}
+#zoom{position:fixed;inset:0;z-index:20;background:rgba(0,0,0,.55);-webkit-backdrop-filter:blur(14px);backdrop-filter:blur(14px);display:none;align-items:center;justify-content:center;padding:24px max(16px,env(safe-area-inset-right,0px)) 24px max(16px,env(safe-area-inset-left,0px))}
+#zoom.on{display:flex}
+#zoom .cx{background:var(--grupo);border-radius:16px;overflow:hidden;width:100%;max-width:440px;box-shadow:0 20px 60px rgba(0,0,0,.4)}
+#zoom .anim{width:100%;aspect-ratio:3/2;border-radius:0;cursor:default}
+#zoom .info{padding:14px 16px 16px;display:flex;align-items:center;gap:12px}
+#zoom .info .corpo{flex:1;min-width:0}
+#zoom h3{margin:0;font-size:19px}
+#zoom .g{color:var(--mut);font-size:14px}
 /* estilo Jefit: grupos musculares, coluna Anterior, recordes, calendário */
 .mus{width:40px;height:40px;border-radius:10px;display:grid;place-items:center;color:#fff;font-size:13px;font-weight:700;letter-spacing:.2px;flex:none}
 .ex-cab{display:flex;align-items:center;gap:12px;padding:12px 16px 8px}
@@ -191,6 +209,7 @@ textarea{width:100%;min-height:120px;border:0;background:var(--grupo);color:var(
   <button id="tmais">+15 s</button><button id="tsalta">Saltar</button>
 </div>
 <nav id="nav"></nav>
+<div id="zoom" role="dialog" aria-label="Exercício"></div>
 <script>
 "use strict";
 /* ---------- ícones (traço, estilo SF Symbols) ---------- */
@@ -357,6 +376,53 @@ const GRUPOS = [
   [/prancha|bird|pallof|core/, "Core", "CR", "#ff9500"]
 ];
 function grupo(nome){ const n = norm(nome); for (const [re, g, s, c] of GRUPOS) if (re.test(n)) return {g, s, c}; return {g:"Outro", s:nome.slice(0,2).toUpperCase(), c:"#8e8e93"}; }
+const FOTOS = [
+  [/gemeos na prensa|prensa.*gemeos/, "calf_press_on_the_leg_press_machine"],
+  [/prensa|leg press/, "leg_press"],
+  [/extensao de pernas|cadeira extensora/, "leg_extensions"],
+  [/flexao de pernas sentado|mesa flexora sentado/, "seated_leg_curl"],
+  [/flexao de pernas|isquiotibiais com elastico|mesa flexora|leg curl/, "lying_leg_curls"],
+  [/abducao/, "thigh_abductor"], [/aducao/, "thigh_adductor"],
+  [/gemeos/, "seated_calf_raise"],
+  [/abdominais na maquina|crunch na maquina/, "ab_crunch_machine"],
+  [/crunch inverso/, "reverse_crunch"],
+  [/elevacao de (joelhos|pernas)/, "hanging_leg_raise"],
+  [/peso morto romeno com halteres|peso morto com halteres/, "stiff-legged_dumbbell_deadlift"],
+  [/peso morto/, "romanian_deadlift"],
+  [/supino com halteres/, "dumbbell_bench_press"],
+  [/supino|press de peito|chest press/, "leverage_chest_press"],
+  [/peck|borboleta|aberturas na maquina|voador/, "butterfly"],
+  [/cruzamento|crossover/, "cable_crossover"],
+  [/remada (sentada|baixa)|remada na polia/, "seated_cable_rows"],
+  [/remada/, "bent_over_two-dumbbell_row"],
+  [/puxada/, "wide-grip_lat_pulldown"],
+  [/press de ombros na maquina|desenvolvimento na maquina/, "machine_shoulder_military_press"],
+  [/press de ombros|desenvolvimento/, "dumbbell_shoulder_press"],
+  [/elevacao lateral/, "side_lateral_raise"],
+  [/curl martelo/, "hammer_curls"],
+  [/curl .*polia|curl na polia/, "standing_biceps_cable_curl"],
+  [/curl/, "dumbbell_bicep_curl"],
+  [/triceps acima da cabeca|triceps .*cabeca|frances/, "cable_rope_overhead_triceps_extension"],
+  [/triceps/, "triceps_pushdown"],
+  [/goblet/, "goblet_squat"], [/agachamento/, "smith_machine_squat"],
+  [/ponte|gluteos/, "barbell_glute_bridge"],
+  [/bicicleta/, "recumbent_bike"]
+];
+function foto(nome){ const n = norm(nome); for (const [re, id] of FOTOS) if (re.test(n)) return id; return null; }
+const srcFoto = (id, i) => (window.__IMG && window.__IMG[id]) ? window.__IMG[id][i] : "ex/" + id + "_" + i + ".jpg";
+function animEx(nome, tam){
+  const id = foto(nome);
+  if (!id) return musIc(nome);
+  const g = grupo(nome);
+  return `<div class="anim ${tam}" data-zoom="${esc(nome)}"><img src="${srcFoto(id,0)}" alt="" loading="lazy"><img class="b" src="${srcFoto(id,1)}" alt="" loading="lazy">${tam === "m" ? `<span class="tag" style="background:${g.c}">${g.s}</span>` : ""}</div>`;
+}
+function abrirZoom(nome){
+  const z = $("#zoom"); const g = grupo(nome); const id = foto(nome); if (!id) return;
+  z.innerHTML = `<div class="cx"><div class="anim"><img src="${srcFoto(id,0)}" alt=""><img class="b" src="${srcFoto(id,1)}" alt=""></div>
+    <div class="info">${musIc(nome)}<div class="corpo"><h3>${esc(nome)}</h3><div class="g">${esc(g.g)}</div></div><button class="lnk forte" id="zfecha">OK</button></div></div>`;
+  z.classList.add("on");
+  z.onclick = ev => { if (ev.target === z || ev.target.id === "zfecha") z.classList.remove("on"); };
+}
 const musIc = nome => { const g = grupo(nome); return `<div class="mus" style="background:${g.c}">${g.s}</div>`; };
 const rm1 = (kg, reps) => kg ? kg * (1 + Math.min(reps, 15) / 30) : 0;
 function maxAntes(nome, excluirId){ const n = norm(nome); let k = 0, r = 0;
@@ -391,6 +457,7 @@ function irPara(v){
   desenhar(); window.scrollTo(0,0);
 }
 window.voltar = function(){
+  const z = document.getElementById("zoom"); if (z && z.classList.contains("on")){ z.classList.remove("on"); return true; }
   if (vista === "detalhe"){ irPara("hist"); return true; }
   if (vista === "previa"){ irPara("hoje"); return true; }
   if (vista !== "hoje" && vista !== "sessao"){ irPara("hoje"); return true; }
@@ -469,7 +536,7 @@ function vPrevia(){
     <div class="grupo" style="margin-top:12px"><div class="stats"><div><b>${t.exercicios.length}</b><small>exercícios</small></div><div><b>${nS}</b><small>séries</small></div><div><b>~${duracaoEst(t)}</b><small>minutos</small></div></div></div>
     <div class="rodape">${esc(grupos.join(" · "))}</div>
     <div class="sec">Exercícios</div><div class="grupo">${t.exercicios.map(e => { const u = ultimaVez(e.nome); const g = grupo(e.nome);
-      return `<div class="lin" style="padding-left:12px">${musIc(e.nome)}<div class="corpo"><div class="t">${esc(e.nome)}</div><div class="d">${esc(resumoPlano(e))}${u ? " · anterior " + esc(resumoCurto(u.series.slice(-1))) : ""}</div></div></div>`; }).join("")}</div>`;
+      return `<div class="lin cf" style="padding-left:12px">${animEx(e.nome,"p")}<div class="corpo"><div class="t">${esc(e.nome)}</div><div class="d">${esc(g.g)} · ${esc(resumoPlano(e))}${u ? " · anterior " + esc(resumoCurto(u.series.slice(-1))) : ""}</div></div></div>`; }).join("")}</div>`;
   if (t.notas) html += `<div class="sec">Notas</div><div class="grupo"><div class="notas">${esc(t.notas)}</div></div>`;
   return html + `<div style="height:20px"></div><button class="btn pri" id="biniciar">Iniciar treino</button><div style="height:20px"></div></main>`;
 }
@@ -502,7 +569,7 @@ function vSessao(){
     const u = ultimaVez(e.nome);
     const tudo = e.series.length && e.series.every(x => x.feito);
     const g = grupo(e.nome);
-    html += `<div class="grupo" style="margin-top:16px"><div class="ex-cab">${musIc(e.nome)}<div class="corpo"><h3>${esc(e.nome)}</h3><div class="g">${esc(g.g)}${u ? " · anterior " + esc(dataCurta(u.data)) : " · primeira vez"}</div></div>${tudo ? `<span class="feito">${ic("certoc")}</span>` : ""}</div>
+    html += `<div class="grupo" style="margin-top:16px"><div class="ex-cab">${animEx(e.nome,"m")}<div class="corpo"><h3>${esc(e.nome)}</h3><div class="g">${esc(g.g)}${u ? " · anterior " + esc(dataCurta(u.data)) : " · primeira vez"}</div></div>${tudo ? `<span class="feito">${ic("certoc")}</span>` : ""}</div>
       <div class="cab-ser"><span>Sér.</span><span>Anterior</span><span>kg</span><span>${e.series[0] && e.series[0].unid === "s" ? "Seg." : "Reps"}</span><span></span></div>`;
     e.series.forEach((x, si) => {
       const a = u ? u.series[si] : null;
@@ -652,7 +719,7 @@ function vDetalhe(){
     let rec = "";
     if (mk && ant.k && mk > ant.k){ rec = "Recorde de carga"; recs.push(e.nome + ": " + fmtKg(mk) + " kg (antes " + fmtKg(ant.k) + ")"); }
     else if (mr && ant.r && mr > ant.r + 0.01){ rec = "Recorde de 1RM"; recs.push(e.nome + ": 1RM estimado " + fmtKg(Math.round(mr*2)/2) + " kg"); }
-    return `<div class="lin" style="padding-left:12px">${musIc(e.nome)}<div class="corpo"><div class="t">${esc(e.nome)}${rec ? `<span class="pilula ouro">${rec}</span>` : ""}</div>
+    return `<div class="lin cf" style="padding-left:12px">${animEx(e.nome,"p")}<div class="corpo"><div class="t">${esc(e.nome)}${rec ? `<span class="pilula ouro">${rec}</span>` : ""}</div>
       <div class="d">${f.length ? esc(resumoSeries(f)) + (mr ? " · 1RM est. " + fmtKg(Math.round(mr*2)/2) + " kg" : "") : "Não feito"}</div></div>${f.length ? `<span style="color:var(--ok);display:flex">${ic("certoc")}</span>` : ""}</div>`; });
   if (recs.length) html += `<div class="sec">Recordes neste treino</div><div class="grupo">${recs.map(t => `<div class="lin" style="padding-left:12px"><span class="trofeu">${ic("trofeu")}</span><div class="corpo"><div class="t" style="white-space:normal">${esc(t)}</div></div></div>`).join("")}</div>`;
   html += `<div class="sec">Exercícios</div><div class="grupo">${linhas.join("")}</div>`;
@@ -679,12 +746,13 @@ function vDef(){
   <textarea id="tback" aria-label="Cópia de segurança do histórico">${esc(JSON.stringify(hist()))}</textarea>
   <div class="rodape">O histórico fica só neste telemóvel. Copia este texto para um lugar seguro, ou cola aqui uma cópia antiga e carrega em Repor.</div>
   <div style="height:12px"></div><button class="btn" id="brepor">Repor a partir do texto</button>
-  <div class="versao">Treino Ginásio · versão ${esc(versao())}</div></main>`;
+  <div class="versao">Treino Ginásio · versão ${esc(versao())}<br>Imagens dos exercícios: Free Exercise DB, domínio público</div></main>`;
 }
 function versao(){ try{ return temAndroid() ? window.Android.version() : "web"; }catch(e){ return "?"; } }
 
 /* ---------- eventos ---------- */
 function ligar(){
+  document.querySelectorAll("[data-zoom]").forEach(el => el.onclick = ev => { ev.stopPropagation(); abrirZoom(el.dataset.zoom); });
   const on0 = (id, f) => { const el = $(id); if (el) el.onclick = f; };
   document.querySelectorAll("[data-abrir]").forEach(el => el.onclick = () => { previaId = el.dataset.abrir; vista = "previa"; desenhar(); window.scrollTo(0,0); });
   on0("#biniciar", () => abrirTreino(previaId));
