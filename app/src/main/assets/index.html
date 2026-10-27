@@ -793,6 +793,10 @@ function vDef(){
   <div class="rodape">No Intervals.icu: Settings → Developer Settings → API Key. Deixa o ID de atleta em 0.</div>
   <div style="height:16px"></div><button class="btn pri" id="bgrav">Guardar e testar ligação</button>
   ${defMsg.msg ? `<div class="msg ${defMsg.tipo}">${esc(defMsg.msg)}</div>` : ""}
+  <div class="sec">Garmin</div>
+  <div class="grupo"><div class="lin toque" id="bimp"><div class="ic azul">${ic("nuvem")}</div><div class="corpo"><div class="t">Importar pesos do Garmin</div><div class="d">Lê as séries e os pesos dos teus treinos de força dos últimos 60 dias</div></div><div class="chev">${ic("seta")}</div></div></div>
+  ${impMsg.msg ? `<div class="msg ${impMsg.tipo}">${esc(impMsg.msg)}</div>` : ""}
+  <div class="rodape">Os pesos ficam no teu calendário do Intervals.icu como notas "Pesos Garmin", para o planeamento usar as cargas reais.</div>
   <div class="sec">Cópia de segurança</div>
   <textarea id="tback" aria-label="Cópia de segurança do histórico">${esc(JSON.stringify(hist()))}</textarea>
   <div class="rodape">O histórico fica só neste telemóvel. Copia este texto para um lugar seguro, ou cola aqui uma cópia antiga e carrega em Repor.</div>
@@ -830,6 +834,7 @@ function ligar(){
     desenhar();
     if (r.status === 200) sincronizar();
   });
+  on("#bimp", importarPesos);
   on("#brepor", () => {
     let d; try{ d = JSON.parse($("#tback").value); }catch(e){ alert("O texto não é uma cópia de segurança válida."); return; }
     if (!Array.isArray(d)){ alert("O texto não é uma cópia de segurança válida."); return; }
@@ -866,6 +871,118 @@ function ligar(){
   document.querySelectorAll("[data-add]").forEach(el => el.onclick = () => { const a = +el.dataset.add; const x = LS.get("tg_ativa"); const ss = x.exercicios[a].series; const l = ss[ss.length-1] || {reps:10,unid:"reps",kg:null,descanso:60};
     ss.push({reps:l.reps, unid:l.unid, kg:l.kg, descanso:l.descanso, feito:false}); guardarAtiva(x); const y = window.scrollY; desenhar(); window.scrollTo(0, y); });
   actualizarCrono();
+}
+
+/* ---------- importar pesos do Garmin (ficheiros FIT originais via Intervals.icu) ---------- */
+const CAT_FIT = ["Supino","Gémeos","Cardio","Transporte de carga","Chop","Core","Abdominais","Curl","Peso morto","Aberturas","Elevação de anca","Estabilidade da anca","Balanço de anca","Hiperextensão","Elevação lateral","Flexão de pernas","Elevação de pernas","Afundo","Levantamento olímpico","Prancha","Pliometria","Puxada / elevações","Flexões","Remada","Press de ombros","Estabilidade do ombro","Encolhimentos","Sit-up","Agachamento / prensa","Corpo inteiro","Extensão de tríceps","Aquecimento","Corrida"];
+function httpBin(caminho){
+  const c = cfg();
+  const url = "https://intervals.icu/api/v1" + caminho;
+  return new Promise(resolve => {
+    if (temAndroid() && window.Android.httpB64){
+      const id = "b" + Date.now() + Math.random().toString(36).slice(2);
+      pendentes[id] = resolve;
+      window.Android.httpB64(id, url, c.chave || "");
+    } else resolve({status:0, body:"Só funciona na aplicação Android."});
+  });
+}
+function lerFIT(u8){
+  const dv = new DataView(u8.buffer, u8.byteOffset, u8.byteLength);
+  const hs = u8[0], fim = Math.min(u8.length, hs + dv.getUint32(4, true));
+  const defs = {}, msgs = [];
+  let p = hs;
+  const TAM = {0:1,1:1,2:1,3:2,4:2,5:4,6:4,7:1,8:4,9:8,10:1,11:2,12:4,13:1,14:8,15:8,16:8};
+  function valor(base, off, tam, le){
+    const t = base & 0x1f;
+    if (t === 7){ let s = ""; for (let i = 0; i < tam && u8[off+i]; i++) s += String.fromCharCode(u8[off+i]); try{ return decodeURIComponent(escape(s)); }catch(e){ return s; } }
+    const n = TAM[t] || 1, out = [];
+    for (let k = 0; k + n <= tam; k += n){
+      const o = off + k; let v;
+      switch (t){
+        case 1: v = dv.getInt8(o); break;
+        case 0: case 2: case 10: case 13: v = u8[o]; break;
+        case 3: v = dv.getInt16(o, le); break;
+        case 4: case 11: v = dv.getUint16(o, le); break;
+        case 5: v = dv.getInt32(o, le); break;
+        case 6: case 12: v = dv.getUint32(o, le); break;
+        case 8: v = dv.getFloat32(o, le); break;
+        case 9: v = dv.getFloat64(o, le); break;
+        default: v = null;
+      }
+      out.push(v);
+    }
+    return out.length === 1 ? out[0] : out;
+  }
+  while (p < fim){
+    const cab = u8[p++];
+    if (cab & 0x80){ const d = defs[(cab >> 5) & 3]; if (!d) break; p = dado(d, p); continue; }
+    const local = cab & 0x0f;
+    if (cab & 0x40){
+      const arq = u8[p+1], le = arq === 0, glob = le ? dv.getUint16(p+2, true) : dv.getUint16(p+2, false), nf = u8[p+4];
+      p += 5; const campos = [];
+      for (let i = 0; i < nf; i++){ campos.push([u8[p], u8[p+1], u8[p+2]]); p += 3; }
+      let dev = 0;
+      if (cab & 0x20){ const nd = u8[p++]; for (let i = 0; i < nd; i++){ dev += u8[p+1]; p += 3; } }
+      defs[local] = {glob, le, campos, dev};
+    } else {
+      const d = defs[local]; if (!d) break; p = dado(d, p);
+    }
+  }
+  function dado(d, q){
+    const m = {_g:d.glob};
+    for (const [num, tam, base] of d.campos){ m[num] = valor(base, q, tam, d.le); q += tam; }
+    msgs.push(m); return q + d.dev;
+  }
+  return msgs;
+}
+const invalido = v => v == null || v === 0xFFFF || v === 0xFF || v === 0xFFFFFFFF;
+function seriesDoFIT(msgs){
+  const passos = {};
+  msgs.filter(m => m._g === 27).forEach(m => { const i = m[254]; if (!invalido(i)) passos[i] = (typeof m[0] === "string" && m[0]) || passos[i] || ""; });
+  msgs.filter(m => m._g === 264).forEach(m => { if (typeof m[2] === "string" && m[2]){ const i = m[254]; if (!invalido(i) && !passos[i]) passos[i] = m[2]; } });
+  return msgs.filter(m => m._g === 225 && m[5] === 1).map(m => {
+    const cat = Array.isArray(m[7]) ? m[7][0] : m[7], sub = Array.isArray(m[8]) ? m[8][0] : m[8];
+    const passo = invalido(m[11]) ? null : m[11];
+    return {reps: invalido(m[3]) ? null : m[3], kg: invalido(m[4]) ? null : Math.round(m[4] / 16 * 10) / 10,
+      cat: invalido(cat) ? null : cat, sub: invalido(sub) ? null : sub, nome: passo != null ? (passos[passo] || "") : ""};
+  });
+}
+function textoPesos(act, series){
+  const grupos = [];
+  series.forEach(s => {
+    const rot = s.nome || ((s.cat != null ? (CAT_FIT[s.cat] || "Categoria " + s.cat) : "Exercício sem categoria") + (s.sub != null ? " [" + s.cat + "/" + s.sub + "]" : ""));
+    const g = grupos[grupos.length-1];
+    if (g && g.rot === rot) g.s.push(s); else grupos.push({rot, s:[s]});
+  });
+  return ["PESOS GARMIN — " + (act.name || "Treino de força") + " — " + (act.start_date_local || "").slice(0,10)]
+    .concat(grupos.map(g => g.rot + ": " + g.s.map(s => (s.kg != null && s.kg > 0 ? fmtKg(s.kg) + "×" : "") + (s.reps != null ? s.reps : "?")).join(", "))).join("\n");
+}
+let impMsg = {msg:"", tipo:""};
+async function importarPesos(){
+  if (!cfg().chave){ impMsg = {msg:"Falta a chave do Intervals.icu.", tipo:"err"}; desenhar(); return; }
+  impMsg = {msg:"A procurar treinos de força dos últimos 60 dias…", tipo:""}; desenhar();
+  const ini = isoDia(new Date(Date.now() - 60*864e5)), fim = hoje();
+  const r = await http("GET", `/athlete/{a}/activities?oldest=${ini}&newest=${fim}`);
+  if (r.status !== 200){ impMsg = {msg:"Erro " + r.status + " ao ler as actividades.", tipo:"err"}; desenhar(); return; }
+  let acts = []; try{ acts = JSON.parse(r.body); }catch(e){}
+  const feitos = LS.get("tg_imp", []);
+  acts = acts.filter(a => /weight/i.test(a.type || "") && !feitos.includes(a.id)).sort((a,b) => a.start_date_local < b.start_date_local ? 1 : -1).slice(0, 15);
+  if (!acts.length){ impMsg = {msg:"Não há treinos de força novos para importar.", tipo:"ok"}; desenhar(); return; }
+  let ok = 0, sem = 0;
+  for (const a of acts){
+    impMsg = {msg:"A ler " + (a.name || "treino") + " de " + dataCurta(a.start_date_local) + "… (" + (ok + sem + 1) + "/" + acts.length + ")", tipo:""}; desenhar();
+    const f = await httpBin("/activity/" + encodeURIComponent(a.id) + "/file");
+    if (f.status !== 200 || !f.b64){ sem++; continue; }
+    let series = [];
+    try{ const bin = atob(f.b64); const u8 = new Uint8Array(bin.length); for (let i = 0; i < bin.length; i++) u8[i] = bin.charCodeAt(i); series = seriesDoFIT(lerFIT(u8)); }catch(e){ series = []; }
+    if (!series.length){ sem++; feitos.push(a.id); continue; }
+    const pr = await http("POST", "/athlete/{a}/events", {category:"NOTE", start_date_local:(a.start_date_local||"").slice(0,10) + "T00:00:00",
+      name:"Pesos Garmin — " + (a.name || "Treino de força"), description:textoPesos(a, series)});
+    if (pr.status >= 200 && pr.status < 300){ ok++; feitos.push(a.id); } else sem++;
+  }
+  LS.set("tg_imp", feitos);
+  impMsg = {msg: ok ? ok + " treino(s) importado(s) para o Intervals.icu" + (sem ? "; " + sem + " sem dados de séries." : ".") : "Nenhum treino tinha séries com pesos no ficheiro do Garmin.", tipo: ok ? "ok" : "err"};
+  desenhar();
 }
 
 /* ---------- registos por enviar (ginásio sem rede) ---------- */

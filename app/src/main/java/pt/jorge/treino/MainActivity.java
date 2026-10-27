@@ -23,12 +23,14 @@ import android.webkit.WebViewClient;
 
 import org.json.JSONObject;
 
+import java.io.ByteArrayInputStream;
 import java.io.ByteArrayOutputStream;
 import java.io.InputStream;
 import java.io.OutputStream;
 import java.net.HttpURLConnection;
 import java.net.URL;
 import java.nio.charset.StandardCharsets;
+import java.util.zip.GZIPInputStream;
 
 public class MainActivity extends Activity {
 
@@ -153,6 +155,49 @@ public class MainActivity extends Activity {
             }).start();
         }
 
+        /** Descarrega um ficheiro binário (ex.: FIT original, comprimido em gzip) e devolve-o em base64. */
+        @JavascriptInterface
+        public void httpB64(final String id, final String endereco, final String chave) {
+            new Thread(() -> {
+                int estado = 0;
+                String b64 = "";
+                String erro = "";
+                HttpURLConnection c = null;
+                try {
+                    c = (HttpURLConnection) new URL(endereco).openConnection();
+                    c.setConnectTimeout(15000);
+                    c.setReadTimeout(30000);
+                    String auth = Base64.encodeToString(
+                            ("API_KEY:" + chave).getBytes(StandardCharsets.UTF_8), Base64.NO_WRAP);
+                    c.setRequestProperty("Authorization", "Basic " + auth);
+                    estado = c.getResponseCode();
+                    InputStream is = estado >= 400 ? c.getErrorStream() : c.getInputStream();
+                    byte[] dados = lerBytes(is);
+                    if (dados.length > 2 && (dados[0] & 0xff) == 0x1f && (dados[1] & 0xff) == 0x8b) {
+                        dados = lerBytes(new GZIPInputStream(new ByteArrayInputStream(dados)));
+                    }
+                    b64 = Base64.encodeToString(dados, Base64.NO_WRAP);
+                } catch (Exception e) {
+                    erro = String.valueOf(e.getMessage());
+                } finally {
+                    if (c != null) {
+                        c.disconnect();
+                    }
+                }
+                String json;
+                try {
+                    JSONObject o = new JSONObject();
+                    o.put("status", estado);
+                    o.put("b64", b64);
+                    o.put("body", erro);
+                    json = o.toString();
+                } catch (Exception e) {
+                    json = "{\"status\":0,\"b64\":\"\",\"body\":\"\"}";
+                }
+                devolver(id, json);
+            }).start();
+        }
+
         @JavascriptInterface
         public void restAlarm(final int ms) {
             mao.post(() -> {
@@ -202,6 +247,20 @@ public class MainActivity extends Activity {
                 return "?";
             }
         }
+    }
+
+    private static byte[] lerBytes(InputStream is) throws Exception {
+        if (is == null) {
+            return new byte[0];
+        }
+        ByteArrayOutputStream b = new ByteArrayOutputStream();
+        byte[] buf = new byte[16384];
+        int n;
+        while ((n = is.read(buf)) > 0) {
+            b.write(buf, 0, n);
+        }
+        is.close();
+        return b.toByteArray();
     }
 
     private static String ler(InputStream is) throws Exception {
