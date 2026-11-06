@@ -28,7 +28,7 @@ class JorgeFaceView extends WatchUi.WatchFace {
     const CAP_BIG  = 157;
     const DIG_H    = 159;
     const PAD      = 0;
-    const BASE_Y   = 0.619;  // linha de base da hora (fraccao da altura)  // altura dos bitmaps dos digitos (linha de base em baixo)
+    const BASE_Y   = 0.65;  // linha de base da hora (fraccao da altura)  // altura dos bitmaps dos digitos (linha de base em baixo)
     const ASC_UNIT = 24;
     const ASC_DATE = 46;
     const CAP_DATE = 32;
@@ -137,7 +137,7 @@ class JorgeFaceView extends WatchUi.WatchFace {
         var wu = dc.getTextWidthInPixels("d", fBat);
         var gap = 12;
         var total = iw + 6 + wb + 2 + wp + gap + wd + 2 + wu;
-        var base = _h * BASE_Y - CAP_BIG - 14;
+        var base = _h * BASE_Y - CAP_BIG - 28;
         var x = _cx - total / 2;
 
         dc.drawBitmap(x, base - CAP_BAT / 2 - iw / 2, icBatteryTop);
@@ -168,7 +168,7 @@ class JorgeFaceView extends WatchUi.WatchFace {
         var w1 = dc.getTextWidthInPixels(dia, fDateBig);
         var w2 = dc.getTextWidthInPixels(num, fDateBig);
         var w3 = dc.getTextWidthInPixels(mes, fDateBig);
-        var top = _h * 0.883 - ASC_DBIG;
+        var top = _h * 0.90 - ASC_DBIG;
         var x = _cx - (w1 + sp + w2 + sp + w3) / 2;
         dc.setColor(WHITE, Graphics.COLOR_TRANSPARENT);
         dc.drawText(x, top, fDateBig, dia, j);
@@ -228,7 +228,7 @@ class JorgeFaceView extends WatchUi.WatchFace {
     // Indicadores: recuperacao | distancia do dia
     // ------------------------------------------------------------------
     function drawIndicators(dc) {
-        var row = _h * 0.698;
+        var row = _h * 0.735;
         var rec = getRecoveryHours();
         drawCell(dc, _cx - _w * 0.21, row, icRecovery, (rec == null) ? "--" : ("" + rec), "h", WHITE);
         var km = getDistanceKm();
@@ -269,7 +269,7 @@ class JorgeFaceView extends WatchUi.WatchFace {
         var d = DIAS[(info.day_of_week - 1) % 7] + " " + info.day;
         var wd = dc.getTextWidthInPixels(d, fDate);
         dc.setColor(0x383838, Graphics.COLOR_TRANSPARENT);
-        dc.drawText(_cx - wd / 2 + dx, _h * 0.883 - ASC_DATE + dy, fDate, d, Graphics.TEXT_JUSTIFY_LEFT);
+        dc.drawText(_cx - wd / 2 + dx, _h * 0.90 - ASC_DATE + dy, fDate, d, Graphics.TEXT_JUSTIFY_LEFT);
     }
 
     // ==================================================================
