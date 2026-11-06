@@ -5,6 +5,9 @@ on:
     branches: [mostrador-fr965]
   workflow_dispatch:
 
+permissions:
+  contents: write
+
 jobs:
   build:
     runs-on: ubuntu-latest
@@ -14,9 +17,9 @@ jobs:
       AGREEMENT_HASH: ${{ secrets.GARMIN_AGREEMENT_HASH }}
       DEVELOPER_KEY_B64: ${{ secrets.DEVELOPER_KEY_B64 }}
     steps:
-      - uses: actions/checkout@v4
+      - uses: actions/checkout@v5
 
-      - uses: actions/setup-java@v4
+      - uses: actions/setup-java@v5
         with:
           distribution: temurin
           java-version: "17"
@@ -59,6 +62,15 @@ jobs:
         run: |
           mkdir -p bin
           monkeyc -f monkey.jungle -d fr965 -o bin/JorgeVerde.prg -y developer_key.der -w
+
+      - name: Guardar o .prg no ramo
+        run: |
+          mkdir -p prg && cp bin/JorgeVerde.prg prg/
+          git config user.name "github-actions"
+          git config user.email "github-actions@users.noreply.github.com"
+          git add prg/JorgeVerde.prg
+          git commit -m "JorgeVerde.prg compilado [skip ci]" || echo "sem alteracoes"
+          git push
 
       - uses: actions/upload-artifact@v4
         with:
