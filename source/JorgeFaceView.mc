@@ -26,14 +26,17 @@ class JorgeFaceView extends WatchUi.WatchFace {
 
     // Metricas das fontes (ascendente = distancia do topo a linha de base)
     const ASC_BIG  = 150;
-    const CAP_BIG  = 135;
-    const DIG_H    = 137;  // altura dos bitmaps dos digitos (linha de base em baixo)
+    const CAP_BIG  = 157;
+    const DIG_H    = 159;
+    const BASE_Y   = 0.621;  // linha de base da hora (fraccao da altura)  // altura dos bitmaps dos digitos (linha de base em baixo)
     const ASC_VAL  = 44;
     const CAP_VAL  = 31;
     const ASC_UNIT = 24;
     const ASC_DATE = 36;
 
     var DIAS  = ["DOM", "SEG", "TER", "QUA", "QUI", "SEX", "SÁB"];
+
+    var MESES = ["JAN", "FEV", "MAR", "ABR", "MAI", "JUN", "JUL", "AGO", "SET", "OUT", "NOV", "DEZ"];
 
     var _sleep = false;
     var _w = 454;
@@ -104,38 +107,54 @@ class JorgeFaceView extends WatchUi.WatchFace {
             return;
         }
 
-        drawBattery(dc);
-        drawDate(dc);
+        drawTopLine(dc);
         drawTime(dc, clock, ds);
         drawIndicators(dc);
     }
 
     // ------------------------------------------------------------------
-    // Topo: bateria
+    // Linha acima da hora: "SEX, 6 NOV" + bateria
     // ------------------------------------------------------------------
-    function drawBattery(dc) {
+    function drawTopLine(dc) {
+        var info = Gregorian.info(Time.now(), Time.FORMAT_SHORT);
+        var dia = DIAS[(info.day_of_week - 1) % 7] + ",";
+        var num = "" + info.day;
+        var mes = MESES[(info.month - 1) % 12];
         var batt = System.getSystemStats().battery;
+        var bStr = "" + Math.round(batt).toNumber();
         var bColor = WHITE;
         if (batt < 15) { bColor = RED; } else if (batt < 30) { bColor = ORANGE; }
-        drawCell(dc, _cx, _h * 0.10, icBattery, "" + Math.round(batt).toNumber(), "%", bColor);
-    }
 
-    // ------------------------------------------------------------------
-    // Data: "SEX 6"
-    // ------------------------------------------------------------------
-    function drawDate(dc) {
-        var info = Gregorian.info(Time.now(), Time.FORMAT_SHORT);
-        var dia = DIAS[(info.day_of_week - 1) % 7];
-        var num = "" + info.day;
-        var sp = 10;
+        var sp = 9;
         var w1 = dc.getTextWidthInPixels(dia, fDate);
         var w2 = dc.getTextWidthInPixels(num, fDate);
-        var x = _cx - (w1 + sp + w2) / 2;
-        var top = _h * 0.225 - ASC_DATE;
+        var w3 = dc.getTextWidthInPixels(mes, fDate);
+        var gapB = 22;
+        var iw = 34;
+        var wb = dc.getTextWidthInPixels(bStr, fDate);
+        var wp = dc.getTextWidthInPixels("%", fUnit);
+        var total = w1 + sp + w2 + sp + w3 + gapB + iw + 6 + wb + 3 + wp;
+        var x = _cx - total / 2;
+        var base = _h * BASE_Y - CAP_BIG - 16;
+        var top = base - ASC_DATE;
+        var j = Graphics.TEXT_JUSTIFY_LEFT;
+
         dc.setColor(WHITE, Graphics.COLOR_TRANSPARENT);
-        dc.drawText(x, top, fDate, dia, Graphics.TEXT_JUSTIFY_LEFT);
+        dc.drawText(x, top, fDate, dia, j);
+        x += w1 + sp;
         dc.setColor(ACCENT, Graphics.COLOR_TRANSPARENT);
-        dc.drawText(x + w1 + sp, top, fDate, num, Graphics.TEXT_JUSTIFY_LEFT);
+        dc.drawText(x, top, fDate, num, j);
+        x += w2 + sp;
+        dc.setColor(GREY, Graphics.COLOR_TRANSPARENT);
+        dc.drawText(x, top, fDate, mes, j);
+        x += w3 + gapB;
+        dc.drawBitmap(x, base - 13 - iw / 2, icBattery);
+        x += iw + 6;
+        dc.setColor(bColor, Graphics.COLOR_TRANSPARENT);
+        dc.drawText(x, top, fDate, bStr, j);
+        x += wb + 3;
+        dc.setColor(GREY, Graphics.COLOR_TRANSPARENT);
+        dc.drawText(x, base - ASC_UNIT, fUnit, "%", j);
     }
 
     // ------------------------------------------------------------------
@@ -159,7 +178,7 @@ class JorgeFaceView extends WatchUi.WatchFace {
         var gap = 18;
         var total = d0.getWidth() + d1.getWidth() + gap + d2.getWidth() + d3.getWidth();
         var x = _cx - total / 2;
-        var base = _h * 0.56;
+        var base = _h * BASE_Y;
         var top = base - DIG_H;
 
         dc.drawBitmap(x, top, d0);
@@ -174,7 +193,7 @@ class JorgeFaceView extends WatchUi.WatchFace {
         // Linha fina por baixo da hora
         dc.setPenWidth(1);
         dc.setColor(TICK_5, Graphics.COLOR_TRANSPARENT);
-        dc.drawLine(_cx - _w * 0.30, base + 18, _cx + _w * 0.30, base + 18);
+        dc.drawLine(_cx - _w * 0.30, base + 14, _cx + _w * 0.30, base + 14);
     }
 
     function hourString(clock, ds) {
@@ -190,10 +209,10 @@ class JorgeFaceView extends WatchUi.WatchFace {
     // Indicadores 2x2: recuperacao | altitude / pressao | distancia
     // ------------------------------------------------------------------
     function drawIndicators(dc) {
-        var colL = _cx - _w * 0.19;
-        var colR = _cx + _w * 0.19;
-        var row1 = _h * 0.68;
-        var row2 = _h * 0.81;
+        var colL = _cx - _w * 0.187;
+        var colR = _cx + _w * 0.187;
+        var row1 = _h * 0.72;
+        var row2 = _h * 0.83;
 
         // Tempo de recuperacao
         var rec = getRecoveryHours();
@@ -238,7 +257,7 @@ class JorgeFaceView extends WatchUi.WatchFace {
         var wh = dc.getTextWidthInPixels(hs, fBig);
         var wm = dc.getTextWidthInPixels(ms, fBig);
         var x = _cx - (wh + 14 + wm) / 2 + dx;
-        var t = _h * 0.56 - ASC_BIG + dy;
+        var t = _h * BASE_Y - ASC_BIG + dy;
         dc.setColor(0x505050, Graphics.COLOR_TRANSPARENT);
         dc.drawText(x, t, fBig, hs, Graphics.TEXT_JUSTIFY_LEFT);
         dc.drawText(x + wh + 14, t, fBig, ms, Graphics.TEXT_JUSTIFY_LEFT);
@@ -246,7 +265,7 @@ class JorgeFaceView extends WatchUi.WatchFace {
         var d = DIAS[(info.day_of_week - 1) % 7] + " " + info.day;
         var wd = dc.getTextWidthInPixels(d, fDate);
         dc.setColor(0x383838, Graphics.COLOR_TRANSPARENT);
-        dc.drawText(_cx - wd / 2 + dx, _h * 0.225 - ASC_DATE + dy, fDate, d, Graphics.TEXT_JUSTIFY_LEFT);
+        dc.drawText(_cx - wd / 2 + dx, _h * BASE_Y - CAP_BIG - 16 - ASC_DATE + dy, fDate, d, Graphics.TEXT_JUSTIFY_LEFT);
     }
 
     // ==================================================================
