@@ -1,8 +1,5 @@
 <drawables>
     <bitmap id="LauncherIcon" filename="launcher_icon.png"/>
-    <bitmap id="IcBattery" filename="icbattery.png"/>
-    <bitmap id="IcAltitude" filename="icaltitude.png"/>
-    <bitmap id="IcPressure" filename="icpressure.png"/>
     <bitmap id="IcDistance" filename="icdistance.png"/>
     <bitmap id="IcRecovery" filename="icrecovery.png"/>
     <bitmap id="IcBatteryTop" filename="icbatterytop.png"/>

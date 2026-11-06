@@ -4,14 +4,13 @@ import Toybox.Complications;
 import Toybox.Graphics;
 import Toybox.Lang;
 import Toybox.Math;
-import Toybox.SensorHistory;
 import Toybox.System;
 import Toybox.Time;
 import Toybox.Time.Gregorian;
 import Toybox.WatchUi;
 
 // Mostrador "Jorge Verde" - Forerunner 965 (454x454 AMOLED)
-// Hora em gradiente, data em PT, recuperacao, bateria, altitude, pressao e distancia do dia.
+// Hora em gradiente, data em PT, bateria, recuperacao e distancia do dia.
 class JorgeFaceView extends WatchUi.WatchFace {
 
     // Cores
@@ -29,8 +28,6 @@ class JorgeFaceView extends WatchUi.WatchFace {
     const CAP_BIG  = 157;
     const DIG_H    = 159;
     const BASE_Y   = 0.621;  // linha de base da hora (fraccao da altura)  // altura dos bitmaps dos digitos (linha de base em baixo)
-    const ASC_VAL  = 44;
-    const CAP_VAL  = 31;
     const ASC_UNIT = 24;
     const ASC_DATE = 46;
     const CAP_DATE = 32;
@@ -46,12 +43,8 @@ class JorgeFaceView extends WatchUi.WatchFace {
     var _cy = 227;
 
     var fBig;
-    var fVal;
     var fUnit;
     var fDate;
-    var icBattery;
-    var icAltitude;
-    var icPressure;
     var icDistance;
     var icRecovery;
     var icBatteryTop;
@@ -74,12 +67,8 @@ class JorgeFaceView extends WatchUi.WatchFace {
         _cx = _w / 2;
         _cy = _h / 2;
         fBig  = WatchUi.loadResource(Rez.Fonts.Big);
-        fVal  = WatchUi.loadResource(Rez.Fonts.Val);
         fUnit = WatchUi.loadResource(Rez.Fonts.Unit);
         fDate = WatchUi.loadResource(Rez.Fonts.Date);
-        icBattery  = WatchUi.loadResource(Rez.Drawables.IcBattery);
-        icAltitude = WatchUi.loadResource(Rez.Drawables.IcAltitude);
-        icPressure = WatchUi.loadResource(Rez.Drawables.IcPressure);
         icDistance = WatchUi.loadResource(Rez.Drawables.IcDistance);
         icRecovery = WatchUi.loadResource(Rez.Drawables.IcRecovery);
         icBatteryTop = WatchUi.loadResource(Rez.Drawables.IcBatteryTop);
@@ -211,42 +200,27 @@ class JorgeFaceView extends WatchUi.WatchFace {
     }
 
     // ------------------------------------------------------------------
-    // Indicadores 2x2: recuperacao | altitude / pressao | distancia
+    // Indicadores: recuperacao | distancia do dia
     // ------------------------------------------------------------------
     function drawIndicators(dc) {
-        var colL = _cx - _w * 0.187;
-        var colR = _cx + _w * 0.187;
-        var row1 = _h * 0.72;
-        var row2 = _h * 0.83;
-
-        // Tempo de recuperacao
+        var row = _h * 0.765;
         var rec = getRecoveryHours();
-        drawCell(dc, colL, row1, icRecovery, (rec == null) ? "--" : ("" + rec), "h", WHITE);
-
-        // Altitude
-        var alt = getAltitude();
-        drawCell(dc, colR, row1, icAltitude, (alt == null) ? "--" : ("" + Math.round(alt).toNumber()), "m", WHITE);
-
-        // Pressao atmosferica
-        var p = getPressureHpa();
-        drawCell(dc, colL, row2, icPressure, (p == null) ? "--" : ("" + Math.round(p).toNumber()), "hPa", WHITE);
-
-        // Distancia do dia
+        drawCell(dc, _cx - _w * 0.21, row, icRecovery, (rec == null) ? "--" : ("" + rec), "h", WHITE);
         var km = getDistanceKm();
-        drawCell(dc, colR, row2, icDistance, (km == null) ? "--" : formatKm(km), "km", WHITE);
+        drawCell(dc, _cx + _w * 0.21, row, icDistance, (km == null) ? "--" : formatKm(km), "km", WHITE);
     }
 
     function drawCell(dc, cx, cy, icon, val, unit, valColor) {
-        var iw = 34;
+        var iw = 44;
         var g1 = 8;
         var g2 = 4;
-        var vw = dc.getTextWidthInPixels(val, fVal);
+        var vw = dc.getTextWidthInPixels(val, fDate);
         var uw = dc.getTextWidthInPixels(unit, fUnit);
         var x = cx - (iw + g1 + vw + g2 + uw) / 2;
-        var base = cy + CAP_VAL / 2;
+        var base = cy + CAP_DATE / 2;
         dc.drawBitmap(x, cy - iw / 2, icon);
         dc.setColor(valColor, Graphics.COLOR_TRANSPARENT);
-        dc.drawText(x + iw + g1, base - ASC_VAL, fVal, val, Graphics.TEXT_JUSTIFY_LEFT);
+        dc.drawText(x + iw + g1, base - ASC_DATE, fDate, val, Graphics.TEXT_JUSTIFY_LEFT);
         dc.setColor(GREY, Graphics.COLOR_TRANSPARENT);
         dc.drawText(x + iw + g1 + vw + g2, base - ASC_UNIT, fUnit, unit, Graphics.TEXT_JUSTIFY_LEFT);
     }
@@ -276,19 +250,6 @@ class JorgeFaceView extends WatchUi.WatchFace {
     // ==================================================================
     // Dados
     // ==================================================================
-    function getAltitude() {
-        var ai = Activity.getActivityInfo();
-        if (ai != null && ai.altitude != null) { return ai.altitude; }
-        if ((Toybox has :SensorHistory) && (SensorHistory has :getElevationHistory)) {
-            var it = SensorHistory.getElevationHistory({:period => 1});
-            if (it != null) {
-                var s = it.next();
-                if (s != null && s.data != null) { return s.data; }
-            }
-        }
-        return null;
-    }
-
     // Horas de recuperacao (aceita valor em horas ou minutos)
     function getRecoveryHours() {
         if (!(Toybox has :Complications)) { return null; }
@@ -300,27 +261,6 @@ class JorgeFaceView extends WatchUi.WatchFace {
                 return n;
             }
         } catch (e) {
-        }
-        return null;
-    }
-
-    // Pressao ao nivel do mar em hPa (se nao houver, pressao local)
-    function getPressureHpa() {
-        var ai = Activity.getActivityInfo();
-        if (ai != null) {
-            if ((ai has :meanSeaLevelPressure) && ai.meanSeaLevelPressure != null) {
-                return ai.meanSeaLevelPressure / 100.0;
-            }
-            if ((ai has :ambientPressure) && ai.ambientPressure != null) {
-                return ai.ambientPressure / 100.0;
-            }
-        }
-        if ((Toybox has :SensorHistory) && (SensorHistory has :getPressureHistory)) {
-            var it = SensorHistory.getPressureHistory({:period => 1});
-            if (it != null) {
-                var s = it.next();
-                if (s != null && s.data != null) { return s.data / 100.0; }
-            }
         }
         return null;
     }
