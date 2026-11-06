@@ -118,41 +118,25 @@ class JorgeFaceView extends WatchUi.WatchFace {
     // ------------------------------------------------------------------
     function drawTopLine(dc) {
         var j = Graphics.TEXT_JUSTIFY_LEFT;
-        var stats = System.getSystemStats();
-        var batt = stats.battery;
+        var batt = System.getSystemStats().battery;
         var bStr = "" + Math.round(batt).toNumber();
         var bColor = WHITE;
         if (batt < 15) { bColor = RED; } else if (batt < 30) { bColor = ORANGE; }
 
-        // Dias de autonomia estimados pelo relogio
-        var dStr = "--";
-        if ((stats has :batteryInDays) && stats.batteryInDays != null) {
-            dStr = "" + Math.round(stats.batteryInDays).toNumber();
-        }
-
         var iw = 62;
         var wb = dc.getTextWidthInPixels(bStr, fBat);
         var wp = dc.getTextWidthInPixels("%", fBat);
-        var wd = dc.getTextWidthInPixels(dStr, fBat);
-        var wu = dc.getTextWidthInPixels("d", fBat);
-        var gap = 12;
-        var total = iw + 6 + wb + 2 + wp + gap + wd + 2 + wu;
-        var base = _h * BASE_Y - CAP_BIG - 28;
+        var total = iw + 8 + wb + 2 + wp;
+        var base = _h * BASE_Y - CAP_BIG - 34;
         var x = _cx - total / 2;
 
         dc.drawBitmap(x, base - CAP_BAT / 2 - iw / 2, icBatteryTop);
-        x += iw + 6;
+        x += iw + 8;
         dc.setColor(bColor, Graphics.COLOR_TRANSPARENT);
         dc.drawText(x, base - ASC_BAT, fBat, bStr, j);
         x += wb + 2;
         dc.setColor(SOFT, Graphics.COLOR_TRANSPARENT);
         dc.drawText(x, base - ASC_BAT, fBat, "%", j);
-        x += wp + gap;
-        dc.setColor(WHITE, Graphics.COLOR_TRANSPARENT);
-        dc.drawText(x, base - ASC_BAT, fBat, dStr, j);
-        x += wd + 2;
-        dc.setColor(SOFT, Graphics.COLOR_TRANSPARENT);
-        dc.drawText(x, base - ASC_BAT, fBat, "d", j);
     }
 
     // ------------------------------------------------------------------
