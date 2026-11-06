@@ -183,11 +183,6 @@ class JorgeFaceView extends WatchUi.WatchFace {
         dc.drawBitmap(x, top, d2);
         x += d2.getWidth();
         dc.drawBitmap(x, top, d3);
-
-        // Linha fina por baixo da hora
-        dc.setPenWidth(1);
-        dc.setColor(TICK_5, Graphics.COLOR_TRANSPARENT);
-        dc.drawLine(_cx - _w * 0.30, base + 14, _cx + _w * 0.30, base + 14);
     }
 
     function hourString(clock, ds) {
