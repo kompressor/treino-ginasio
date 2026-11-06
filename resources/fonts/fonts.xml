@@ -3,6 +3,5 @@
     <font id="Unit" filename="unit.fnt" antialias="true"/>
     <font id="Date" filename="date.fnt" antialias="true"/>
     <font id="Bat" filename="bat.fnt" antialias="true"/>
-    <font id="BatUnit" filename="batunit.fnt" antialias="true"/>
     <font id="DateBig" filename="datebig.fnt" antialias="true"/>
 </fonts>
