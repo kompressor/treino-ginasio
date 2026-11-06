@@ -25,8 +25,8 @@ class JorgeFaceView extends WatchUi.WatchFace {
 
     // Metricas das fontes (ascendente = distancia do topo a linha de base)
     const ASC_BIG  = 150;
-    const CAP_BIG  = 157;
-    const DIG_H    = 159;
+    const CAP_BIG  = 141;
+    const DIG_H    = 143;
     const PAD      = 0;
     const BASE_Y   = 0.65;  // linha de base da hora (fraccao da altura)  // altura dos bitmaps dos digitos (linha de base em baixo)
     const ASC_UNIT = 24;
@@ -182,20 +182,21 @@ class JorgeFaceView extends WatchUi.WatchFace {
         var d1 = digit(1, H_IDS, hour % 10);
         var d2 = digit(2, M_IDS, clock.min / 10);
         var d3 = digit(3, M_IDS, clock.min % 10);
-        var gap = 18;
+        var gap = 30;   // entre horas e minutos
+        var sp = 8;     // entre os dois digitos
         var p2 = 2 * PAD;
-        var total = (d0.getWidth() - p2) + (d1.getWidth() - p2) + gap + (d2.getWidth() - p2) + (d3.getWidth() - p2);
+        var total = (d0.getWidth() - p2) + sp + (d1.getWidth() - p2) + gap + (d2.getWidth() - p2) + sp + (d3.getWidth() - p2);
         var x = _cx - total / 2;
         var base = _h * BASE_Y;
         var top = base - DIG_H + PAD;
 
         dc.drawBitmap(x - PAD, top, d0);
-        x += d0.getWidth() - p2;
+        x += d0.getWidth() - p2 + sp;
         dc.drawBitmap(x - PAD, top, d1);
         x += d1.getWidth() - p2;
         x += gap;
         dc.drawBitmap(x - PAD, top, d2);
-        x += d2.getWidth() - p2;
+        x += d2.getWidth() - p2 + sp;
         dc.drawBitmap(x - PAD, top, d3);
     }
 
