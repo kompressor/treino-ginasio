@@ -5,6 +5,7 @@
     <bitmap id="IcPressure" filename="icpressure.png"/>
     <bitmap id="IcDistance" filename="icdistance.png"/>
     <bitmap id="IcRecovery" filename="icrecovery.png"/>
+    <bitmap id="IcBatteryTop" filename="icbatterytop.png"/>
     <bitmap id="H0" filename="h0.png"/>
     <bitmap id="H1" filename="h1.png"/>
     <bitmap id="H2" filename="h2.png"/>
