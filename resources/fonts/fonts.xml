@@ -1,0 +1,6 @@
+<fonts>
+    <font id="Big" filename="big.fnt" antialias="true"/>
+    <font id="Val" filename="val.fnt" antialias="true"/>
+    <font id="Unit" filename="unit.fnt" antialias="true"/>
+    <font id="Date" filename="date.fnt" antialias="true"/>
+</fonts>

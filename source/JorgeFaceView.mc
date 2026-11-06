@@ -1,0 +1,316 @@
+import Toybox.Activity;
+import Toybox.ActivityMonitor;
+import Toybox.Complications;
+import Toybox.Graphics;
+import Toybox.Lang;
+import Toybox.Math;
+import Toybox.SensorHistory;
+import Toybox.System;
+import Toybox.Time;
+import Toybox.Time.Gregorian;
+import Toybox.WatchUi;
+
+// Mostrador "Jorge Verde" - Forerunner 965 (454x454 AMOLED)
+// Hora em gradiente, data em PT, recuperacao, bateria, altitude, pressao e distancia do dia.
+class JorgeFaceView extends WatchUi.WatchFace {
+
+    // Cores
+    const ACCENT   = 0x2EE86A;
+    const WHITE    = 0xFFFFFF;
+    const SOFT     = 0xC8C8C8;
+    const GREY     = 0x8A8A8A;
+    const TICK_OFF = 0x262626;
+    const TICK_5   = 0x4A4A4A;
+    const RED      = 0xFF4D4D;
+    const ORANGE   = 0xFFA000;
+
+    // Metricas das fontes (ascendente = distancia do topo a linha de base)
+    const ASC_BIG  = 150;
+    const CAP_BIG  = 135;
+    const DIG_H    = 137;  // altura dos bitmaps dos digitos (linha de base em baixo)
+    const ASC_VAL  = 44;
+    const CAP_VAL  = 31;
+    const ASC_UNIT = 24;
+    const ASC_DATE = 36;
+
+    var DIAS  = ["DOM", "SEG", "TER", "QUA", "QUI", "SEX", "SÁB"];
+
+    var _sleep = false;
+    var _w = 454;
+    var _h = 454;
+    var _cx = 227;
+    var _cy = 227;
+
+    var fBig;
+    var fVal;
+    var fUnit;
+    var fDate;
+    var icBattery;
+    var icAltitude;
+    var icPressure;
+    var icDistance;
+    var icRecovery;
+
+    // Digitos em gradiente (bitmaps) - so os 4 em uso ficam em memoria
+    var H_IDS = [Rez.Drawables.H0, Rez.Drawables.H1, Rez.Drawables.H2, Rez.Drawables.H3, Rez.Drawables.H4,
+                 Rez.Drawables.H5, Rez.Drawables.H6, Rez.Drawables.H7, Rez.Drawables.H8, Rez.Drawables.H9];
+    var M_IDS = [Rez.Drawables.M0, Rez.Drawables.M1, Rez.Drawables.M2, Rez.Drawables.M3, Rez.Drawables.M4,
+                 Rez.Drawables.M5, Rez.Drawables.M6, Rez.Drawables.M7, Rez.Drawables.M8, Rez.Drawables.M9];
+    var _digKey = [-1, -1, -1, -1];
+    var _digBmp = [null, null, null, null];
+
+    function initialize() {
+        WatchFace.initialize();
+    }
+
+    function onLayout(dc) {
+        _w = dc.getWidth();
+        _h = dc.getHeight();
+        _cx = _w / 2;
+        _cy = _h / 2;
+        fBig  = WatchUi.loadResource(Rez.Fonts.Big);
+        fVal  = WatchUi.loadResource(Rez.Fonts.Val);
+        fUnit = WatchUi.loadResource(Rez.Fonts.Unit);
+        fDate = WatchUi.loadResource(Rez.Fonts.Date);
+        icBattery  = WatchUi.loadResource(Rez.Drawables.IcBattery);
+        icAltitude = WatchUi.loadResource(Rez.Drawables.IcAltitude);
+        icPressure = WatchUi.loadResource(Rez.Drawables.IcPressure);
+        icDistance = WatchUi.loadResource(Rez.Drawables.IcDistance);
+        icRecovery = WatchUi.loadResource(Rez.Drawables.IcRecovery);
+    }
+
+    function onEnterSleep() {
+        _sleep = true;
+        WatchUi.requestUpdate();
+    }
+
+    function onExitSleep() {
+        _sleep = false;
+        WatchUi.requestUpdate();
+    }
+
+    function onUpdate(dc) {
+        dc.setColor(Graphics.COLOR_BLACK, Graphics.COLOR_BLACK);
+        dc.clear();
+        if (dc has :setAntiAlias) {
+            dc.setAntiAlias(true);
+        }
+
+        var clock = System.getClockTime();
+        var ds = System.getDeviceSettings();
+        var burnIn = (ds has :requiresBurnInProtection) && ds.requiresBurnInProtection;
+        if (_sleep && burnIn) {
+            drawLowPower(dc, clock, ds);
+            return;
+        }
+
+        drawBattery(dc);
+        drawDate(dc);
+        drawTime(dc, clock, ds);
+        drawIndicators(dc);
+    }
+
+    // ------------------------------------------------------------------
+    // Topo: bateria
+    // ------------------------------------------------------------------
+    function drawBattery(dc) {
+        var batt = System.getSystemStats().battery;
+        var bColor = WHITE;
+        if (batt < 15) { bColor = RED; } else if (batt < 30) { bColor = ORANGE; }
+        drawCell(dc, _cx, _h * 0.10, icBattery, "" + Math.round(batt).toNumber(), "%", bColor);
+    }
+
+    // ------------------------------------------------------------------
+    // Data: "SEX 6"
+    // ------------------------------------------------------------------
+    function drawDate(dc) {
+        var info = Gregorian.info(Time.now(), Time.FORMAT_SHORT);
+        var dia = DIAS[(info.day_of_week - 1) % 7];
+        var num = "" + info.day;
+        var sp = 10;
+        var w1 = dc.getTextWidthInPixels(dia, fDate);
+        var w2 = dc.getTextWidthInPixels(num, fDate);
+        var x = _cx - (w1 + sp + w2) / 2;
+        var top = _h * 0.225 - ASC_DATE;
+        dc.setColor(WHITE, Graphics.COLOR_TRANSPARENT);
+        dc.drawText(x, top, fDate, dia, Graphics.TEXT_JUSTIFY_LEFT);
+        dc.setColor(ACCENT, Graphics.COLOR_TRANSPARENT);
+        dc.drawText(x + w1 + sp, top, fDate, num, Graphics.TEXT_JUSTIFY_LEFT);
+    }
+
+    // ------------------------------------------------------------------
+    // Hora: horas e minutos em gradiente (bitmaps), sem segundos
+    // ------------------------------------------------------------------
+    function digit(slot, ids, n) {
+        if (_digKey[slot] != n || _digBmp[slot] == null) {
+            _digBmp[slot] = null;
+            _digBmp[slot] = WatchUi.loadResource(ids[n]);
+            _digKey[slot] = n;
+        }
+        return _digBmp[slot];
+    }
+
+    function drawTime(dc, clock, ds) {
+        var hour = hourString(clock, ds).toNumber();
+        var d0 = digit(0, H_IDS, hour / 10);
+        var d1 = digit(1, H_IDS, hour % 10);
+        var d2 = digit(2, M_IDS, clock.min / 10);
+        var d3 = digit(3, M_IDS, clock.min % 10);
+        var gap = 18;
+        var total = d0.getWidth() + d1.getWidth() + gap + d2.getWidth() + d3.getWidth();
+        var x = _cx - total / 2;
+        var base = _h * 0.56;
+        var top = base - DIG_H;
+
+        dc.drawBitmap(x, top, d0);
+        x += d0.getWidth();
+        dc.drawBitmap(x, top, d1);
+        x += d1.getWidth();
+        x += gap;
+        dc.drawBitmap(x, top, d2);
+        x += d2.getWidth();
+        dc.drawBitmap(x, top, d3);
+
+        // Linha fina por baixo da hora
+        dc.setPenWidth(1);
+        dc.setColor(TICK_5, Graphics.COLOR_TRANSPARENT);
+        dc.drawLine(_cx - _w * 0.30, base + 18, _cx + _w * 0.30, base + 18);
+    }
+
+    function hourString(clock, ds) {
+        var hour = clock.hour;
+        if (!ds.is24Hour) {
+            hour = hour % 12;
+            if (hour == 0) { hour = 12; }
+        }
+        return hour.format("%02d");
+    }
+
+    // ------------------------------------------------------------------
+    // Indicadores 2x2: recuperacao | altitude / pressao | distancia
+    // ------------------------------------------------------------------
+    function drawIndicators(dc) {
+        var colL = _cx - _w * 0.19;
+        var colR = _cx + _w * 0.19;
+        var row1 = _h * 0.68;
+        var row2 = _h * 0.81;
+
+        // Tempo de recuperacao
+        var rec = getRecoveryHours();
+        drawCell(dc, colL, row1, icRecovery, (rec == null) ? "--" : ("" + rec), "h", WHITE);
+
+        // Altitude
+        var alt = getAltitude();
+        drawCell(dc, colR, row1, icAltitude, (alt == null) ? "--" : ("" + Math.round(alt).toNumber()), "m", WHITE);
+
+        // Pressao atmosferica
+        var p = getPressureHpa();
+        drawCell(dc, colL, row2, icPressure, (p == null) ? "--" : ("" + Math.round(p).toNumber()), "hPa", WHITE);
+
+        // Distancia do dia
+        var km = getDistanceKm();
+        drawCell(dc, colR, row2, icDistance, (km == null) ? "--" : formatKm(km), "km", WHITE);
+    }
+
+    function drawCell(dc, cx, cy, icon, val, unit, valColor) {
+        var iw = 34;
+        var g1 = 8;
+        var g2 = 4;
+        var vw = dc.getTextWidthInPixels(val, fVal);
+        var uw = dc.getTextWidthInPixels(unit, fUnit);
+        var x = cx - (iw + g1 + vw + g2 + uw) / 2;
+        var base = cy + CAP_VAL / 2;
+        dc.drawBitmap(x, cy - iw / 2, icon);
+        dc.setColor(valColor, Graphics.COLOR_TRANSPARENT);
+        dc.drawText(x + iw + g1, base - ASC_VAL, fVal, val, Graphics.TEXT_JUSTIFY_LEFT);
+        dc.setColor(GREY, Graphics.COLOR_TRANSPARENT);
+        dc.drawText(x + iw + g1 + vw + g2, base - ASC_UNIT, fUnit, unit, Graphics.TEXT_JUSTIFY_LEFT);
+    }
+
+    // ------------------------------------------------------------------
+    // Modo sempre-ligado (AMOLED): so hora e data, discretas e a mudar de posicao
+    // ------------------------------------------------------------------
+    function drawLowPower(dc, clock, ds) {
+        var dx = ((clock.min % 5) - 2) * 5;
+        var dy = (((clock.min / 5) % 5) - 2) * 5;
+        var hs = hourString(clock, ds);
+        var ms = clock.min.format("%02d");
+        var wh = dc.getTextWidthInPixels(hs, fBig);
+        var wm = dc.getTextWidthInPixels(ms, fBig);
+        var x = _cx - (wh + 14 + wm) / 2 + dx;
+        var t = _h * 0.56 - ASC_BIG + dy;
+        dc.setColor(0x505050, Graphics.COLOR_TRANSPARENT);
+        dc.drawText(x, t, fBig, hs, Graphics.TEXT_JUSTIFY_LEFT);
+        dc.drawText(x + wh + 14, t, fBig, ms, Graphics.TEXT_JUSTIFY_LEFT);
+        var info = Gregorian.info(Time.now(), Time.FORMAT_SHORT);
+        var d = DIAS[(info.day_of_week - 1) % 7] + " " + info.day;
+        var wd = dc.getTextWidthInPixels(d, fDate);
+        dc.setColor(0x383838, Graphics.COLOR_TRANSPARENT);
+        dc.drawText(_cx - wd / 2 + dx, _h * 0.225 - ASC_DATE + dy, fDate, d, Graphics.TEXT_JUSTIFY_LEFT);
+    }
+
+    // ==================================================================
+    // Dados
+    // ==================================================================
+    function getAltitude() {
+        var ai = Activity.getActivityInfo();
+        if (ai != null && ai.altitude != null) { return ai.altitude; }
+        if ((Toybox has :SensorHistory) && (SensorHistory has :getElevationHistory)) {
+            var it = SensorHistory.getElevationHistory({:period => 1});
+            if (it != null) {
+                var s = it.next();
+                if (s != null && s.data != null) { return s.data; }
+            }
+        }
+        return null;
+    }
+
+    // Horas de recuperacao (aceita valor em horas ou minutos)
+    function getRecoveryHours() {
+        if (!(Toybox has :Complications)) { return null; }
+        try {
+            var c = Complications.getComplication(new Complications.Id(Complications.COMPLICATION_TYPE_RECOVERY_TIME));
+            if (c != null && c.value != null) {
+                var n = c.value.toNumber();
+                if (n > 96) { n = (n + 30) / 60; }
+                return n;
+            }
+        } catch (e) {
+        }
+        return null;
+    }
+
+    // Pressao ao nivel do mar em hPa (se nao houver, pressao local)
+    function getPressureHpa() {
+        var ai = Activity.getActivityInfo();
+        if (ai != null) {
+            if ((ai has :meanSeaLevelPressure) && ai.meanSeaLevelPressure != null) {
+                return ai.meanSeaLevelPressure / 100.0;
+            }
+            if ((ai has :ambientPressure) && ai.ambientPressure != null) {
+                return ai.ambientPressure / 100.0;
+            }
+        }
+        if ((Toybox has :SensorHistory) && (SensorHistory has :getPressureHistory)) {
+            var it = SensorHistory.getPressureHistory({:period => 1});
+            if (it != null) {
+                var s = it.next();
+                if (s != null && s.data != null) { return s.data / 100.0; }
+            }
+        }
+        return null;
+    }
+
+    // Distancia percorrida hoje (passos) em km
+    function getDistanceKm() {
+        var info = ActivityMonitor.getInfo();
+        if (info == null || info.distance == null) { return null; }
+        return info.distance / 100000.0;
+    }
+
+    function formatKm(f) {
+        if (f >= 100.0) { return "" + Math.round(f).toNumber(); }
+        var tenths = Math.round(f * 10.0).toNumber();
+        return (tenths / 10) + "," + (tenths % 10);
+    }
+}
