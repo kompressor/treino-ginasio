@@ -134,9 +134,9 @@ class JorgeFaceView extends WatchUi.WatchFace {
         var wb = dc.getTextWidthInPixels(bStr, fBat);
         var wp = dc.getTextWidthInPixels("%", fUnit);
         var wd = dc.getTextWidthInPixels(dStr, fBat);
-        var wu = dc.getTextWidthInPixels("dias", fUnit);
+        var wu = dc.getTextWidthInPixels("d", fUnit);
         var gap = 18;
-        var total = iw + 8 + wb + 3 + wp + gap + wd + 4 + wu;
+        var total = iw + 8 + wb + 3 + wp + gap + wd + 3 + wu;
         var base = _h * BASE_Y - CAP_BIG - 30;
         var x = _cx - total / 2;
 
@@ -150,9 +150,9 @@ class JorgeFaceView extends WatchUi.WatchFace {
         x += wp + gap;
         dc.setColor(WHITE, Graphics.COLOR_TRANSPARENT);
         dc.drawText(x, base - ASC_BAT, fBat, dStr, j);
-        x += wd + 4;
+        x += wd + 3;
         dc.setColor(GREY, Graphics.COLOR_TRANSPARENT);
-        dc.drawText(x, base - ASC_UNIT, fUnit, "dias", j);
+        dc.drawText(x, base - ASC_UNIT, fUnit, "d", j);
     }
 
     // ------------------------------------------------------------------
@@ -168,7 +168,7 @@ class JorgeFaceView extends WatchUi.WatchFace {
         var w1 = dc.getTextWidthInPixels(dia, fDateBig);
         var w2 = dc.getTextWidthInPixels(num, fDateBig);
         var w3 = dc.getTextWidthInPixels(mes, fDateBig);
-        var top = _h * 0.915 - ASC_DBIG;
+        var top = _h * 0.905 - ASC_DBIG;
         var x = _cx - (w1 + sp + w2 + sp + w3) / 2;
         dc.setColor(WHITE, Graphics.COLOR_TRANSPARENT);
         dc.drawText(x, top, fDateBig, dia, j);
@@ -269,7 +269,7 @@ class JorgeFaceView extends WatchUi.WatchFace {
         var d = DIAS[(info.day_of_week - 1) % 7] + " " + info.day;
         var wd = dc.getTextWidthInPixels(d, fDate);
         dc.setColor(0x383838, Graphics.COLOR_TRANSPARENT);
-        dc.drawText(_cx - wd / 2 + dx, _h * 0.915 - ASC_DATE + dy, fDate, d, Graphics.TEXT_JUSTIFY_LEFT);
+        dc.drawText(_cx - wd / 2 + dx, _h * 0.905 - ASC_DATE + dy, fDate, d, Graphics.TEXT_JUSTIFY_LEFT);
     }
 
     // ==================================================================
