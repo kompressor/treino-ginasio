@@ -26,14 +26,15 @@ class JorgeFaceView extends WatchUi.WatchFace {
     // Metricas das fontes (ascendente = distancia do topo a linha de base)
     const ASC_BIG  = 150;
     const CAP_BIG  = 157;
-    const DIG_H    = 167;  // inclui 4 px de contorno em cada lado
-    const PAD      = 4;
+    const DIG_H    = 159;
+    const PAD      = 0;
     const BASE_Y   = 0.64;  // linha de base da hora (fraccao da altura)  // altura dos bitmaps dos digitos (linha de base em baixo)
     const ASC_UNIT = 24;
     const ASC_DATE = 46;
     const CAP_DATE = 32;
-    const ASC_BAT  = 62;
-    const CAP_BAT  = 43;
+    const ASC_BAT  = 70;
+    const CAP_BAT  = 50;
+    const ASC_DBIG = 54;
 
     var DIAS  = ["DOM", "SEG", "TER", "QUA", "QUI", "SEX", "SÁB"];
 
@@ -49,6 +50,7 @@ class JorgeFaceView extends WatchUi.WatchFace {
     var fUnit;
     var fDate;
     var fBat;
+    var fDateBig;
     var icDistance;
     var icRecovery;
     var icBatteryTop;
@@ -74,6 +76,7 @@ class JorgeFaceView extends WatchUi.WatchFace {
         fUnit = WatchUi.loadResource(Rez.Fonts.Unit);
         fDate = WatchUi.loadResource(Rez.Fonts.Date);
         fBat  = WatchUi.loadResource(Rez.Fonts.Bat);
+        fDateBig = WatchUi.loadResource(Rez.Fonts.DateBig);
         icDistance = WatchUi.loadResource(Rez.Drawables.IcDistance);
         icRecovery = WatchUi.loadResource(Rez.Drawables.IcRecovery);
         icBatteryTop = WatchUi.loadResource(Rez.Drawables.IcBatteryTop);
@@ -127,7 +130,7 @@ class JorgeFaceView extends WatchUi.WatchFace {
             dStr = "" + Math.round(stats.batteryInDays).toNumber();
         }
 
-        var iw = 56;
+        var iw = 62;
         var wb = dc.getTextWidthInPixels(bStr, fBat);
         var wp = dc.getTextWidthInPixels("%", fUnit);
         var wd = dc.getTextWidthInPixels(dStr, fBat);
@@ -161,20 +164,20 @@ class JorgeFaceView extends WatchUi.WatchFace {
         var dia = DIAS[(info.day_of_week - 1) % 7] + ",";
         var num = "" + info.day;
         var mes = MESES[(info.month - 1) % 12];
-        var sp = 8;
-        var w1 = dc.getTextWidthInPixels(dia, fDate);
-        var w2 = dc.getTextWidthInPixels(num, fDate);
-        var w3 = dc.getTextWidthInPixels(mes, fDate);
-        var top = _h * 0.915 - ASC_DATE;
+        var sp = 9;
+        var w1 = dc.getTextWidthInPixels(dia, fDateBig);
+        var w2 = dc.getTextWidthInPixels(num, fDateBig);
+        var w3 = dc.getTextWidthInPixels(mes, fDateBig);
+        var top = _h * 0.915 - ASC_DBIG;
         var x = _cx - (w1 + sp + w2 + sp + w3) / 2;
         dc.setColor(WHITE, Graphics.COLOR_TRANSPARENT);
-        dc.drawText(x, top, fDate, dia, j);
+        dc.drawText(x, top, fDateBig, dia, j);
         x += w1 + sp;
         dc.setColor(ACCENT, Graphics.COLOR_TRANSPARENT);
-        dc.drawText(x, top, fDate, num, j);
+        dc.drawText(x, top, fDateBig, num, j);
         x += w2 + sp;
         dc.setColor(GREY, Graphics.COLOR_TRANSPARENT);
-        dc.drawText(x, top, fDate, mes, j);
+        dc.drawText(x, top, fDateBig, mes, j);
     }
 
     // ------------------------------------------------------------------
