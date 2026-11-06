@@ -100,18 +100,16 @@ class JorgeFaceView extends WatchUi.WatchFace {
         }
 
         drawTopLine(dc);
+        drawDate(dc);
         drawTime(dc, clock, ds);
         drawIndicators(dc);
     }
 
     // ------------------------------------------------------------------
-    // Topo do ecra: bateria. Por baixo: "SEX, 6 NOV" (acima da hora)
+    // Topo: bateria (acima da hora)
     // ------------------------------------------------------------------
     function drawTopLine(dc) {
         var j = Graphics.TEXT_JUSTIFY_LEFT;
-        var digitsTop = _h * BASE_Y - CAP_BIG;
-
-        // Bateria
         var batt = System.getSystemStats().battery;
         var bStr = "" + Math.round(batt).toNumber();
         var bColor = WHITE;
@@ -119,7 +117,7 @@ class JorgeFaceView extends WatchUi.WatchFace {
         var iw = 44;
         var wb = dc.getTextWidthInPixels(bStr, fDate);
         var wp = dc.getTextWidthInPixels("%", fUnit);
-        var bBase = digitsTop - 69;
+        var bBase = _h * BASE_Y - CAP_BIG - 40;
         var x = _cx - (iw + 6 + wb + 3 + wp) / 2;
         dc.drawBitmap(x, bBase - CAP_DATE / 2 - iw / 2, icBatteryTop);
         x += iw + 6;
@@ -128,8 +126,13 @@ class JorgeFaceView extends WatchUi.WatchFace {
         x += wb + 3;
         dc.setColor(GREY, Graphics.COLOR_TRANSPARENT);
         dc.drawText(x, bBase - ASC_UNIT, fUnit, "%", j);
+    }
 
-        // Data
+    // ------------------------------------------------------------------
+    // Fundo do ecra: "SEX, 6 NOV"
+    // ------------------------------------------------------------------
+    function drawDate(dc) {
+        var j = Graphics.TEXT_JUSTIFY_LEFT;
         var info = Gregorian.info(Time.now(), Time.FORMAT_SHORT);
         var dia = DIAS[(info.day_of_week - 1) % 7] + ",";
         var num = "" + info.day;
@@ -138,9 +141,8 @@ class JorgeFaceView extends WatchUi.WatchFace {
         var w1 = dc.getTextWidthInPixels(dia, fDate);
         var w2 = dc.getTextWidthInPixels(num, fDate);
         var w3 = dc.getTextWidthInPixels(mes, fDate);
-        var dBase = digitsTop - 16;
-        var top = dBase - ASC_DATE;
-        x = _cx - (w1 + sp + w2 + sp + w3) / 2;
+        var top = _h * 0.915 - ASC_DATE;
+        var x = _cx - (w1 + sp + w2 + sp + w3) / 2;
         dc.setColor(WHITE, Graphics.COLOR_TRANSPARENT);
         dc.drawText(x, top, fDate, dia, j);
         x += w1 + sp;
@@ -198,7 +200,7 @@ class JorgeFaceView extends WatchUi.WatchFace {
     // Indicadores: recuperacao | distancia do dia
     // ------------------------------------------------------------------
     function drawIndicators(dc) {
-        var row = _h * 0.765;
+        var row = _h * 0.73;
         var rec = getRecoveryHours();
         drawCell(dc, _cx - _w * 0.21, row, icRecovery, (rec == null) ? "--" : ("" + rec), "h", WHITE);
         var km = getDistanceKm();
@@ -239,7 +241,7 @@ class JorgeFaceView extends WatchUi.WatchFace {
         var d = DIAS[(info.day_of_week - 1) % 7] + " " + info.day;
         var wd = dc.getTextWidthInPixels(d, fDate);
         dc.setColor(0x383838, Graphics.COLOR_TRANSPARENT);
-        dc.drawText(_cx - wd / 2 + dx, _h * BASE_Y - CAP_BIG - 16 - ASC_DATE + dy, fDate, d, Graphics.TEXT_JUSTIFY_LEFT);
+        dc.drawText(_cx - wd / 2 + dx, _h * 0.915 - ASC_DATE + dy, fDate, d, Graphics.TEXT_JUSTIFY_LEFT);
     }
 
     // ==================================================================
