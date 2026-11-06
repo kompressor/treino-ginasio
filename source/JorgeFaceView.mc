@@ -34,6 +34,7 @@ class JorgeFaceView extends WatchUi.WatchFace {
     const CAP_DATE = 32;
     const ASC_BAT  = 70;
     const CAP_BAT  = 50;
+    const ASC_BU   = 40;
     const ASC_DBIG = 54;
 
     var DIAS  = ["DOM", "SEG", "TER", "QUA", "QUI", "SEX", "SÁB"];
@@ -50,6 +51,7 @@ class JorgeFaceView extends WatchUi.WatchFace {
     var fUnit;
     var fDate;
     var fBat;
+    var fBatUnit;
     var fDateBig;
     var icDistance;
     var icRecovery;
@@ -76,6 +78,7 @@ class JorgeFaceView extends WatchUi.WatchFace {
         fUnit = WatchUi.loadResource(Rez.Fonts.Unit);
         fDate = WatchUi.loadResource(Rez.Fonts.Date);
         fBat  = WatchUi.loadResource(Rez.Fonts.Bat);
+        fBatUnit = WatchUi.loadResource(Rez.Fonts.BatUnit);
         fDateBig = WatchUi.loadResource(Rez.Fonts.DateBig);
         icDistance = WatchUi.loadResource(Rez.Drawables.IcDistance);
         icRecovery = WatchUi.loadResource(Rez.Drawables.IcRecovery);
@@ -132,9 +135,9 @@ class JorgeFaceView extends WatchUi.WatchFace {
 
         var iw = 62;
         var wb = dc.getTextWidthInPixels(bStr, fBat);
-        var wp = dc.getTextWidthInPixels("%", fUnit);
+        var wp = dc.getTextWidthInPixels("%", fBatUnit);
         var wd = dc.getTextWidthInPixels(dStr, fBat);
-        var wu = dc.getTextWidthInPixels("d", fUnit);
+        var wu = dc.getTextWidthInPixels("d", fBatUnit);
         var gap = 18;
         var total = iw + 8 + wb + 3 + wp + gap + wd + 3 + wu;
         var base = _h * BASE_Y - CAP_BIG - 30;
@@ -146,13 +149,13 @@ class JorgeFaceView extends WatchUi.WatchFace {
         dc.drawText(x, base - ASC_BAT, fBat, bStr, j);
         x += wb + 3;
         dc.setColor(GREY, Graphics.COLOR_TRANSPARENT);
-        dc.drawText(x, base - ASC_UNIT, fUnit, "%", j);
+        dc.drawText(x, base - ASC_BU, fBatUnit, "%", j);
         x += wp + gap;
         dc.setColor(WHITE, Graphics.COLOR_TRANSPARENT);
         dc.drawText(x, base - ASC_BAT, fBat, dStr, j);
         x += wd + 3;
         dc.setColor(GREY, Graphics.COLOR_TRANSPARENT);
-        dc.drawText(x, base - ASC_UNIT, fUnit, "d", j);
+        dc.drawText(x, base - ASC_BU, fBatUnit, "d", j);
     }
 
     // ------------------------------------------------------------------
