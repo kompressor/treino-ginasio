@@ -2,4 +2,5 @@
     <font id="Big" filename="big.fnt" antialias="true"/>
     <font id="Unit" filename="unit.fnt" antialias="true"/>
     <font id="Date" filename="date.fnt" antialias="true"/>
+    <font id="Bat" filename="bat.fnt" antialias="true"/>
 </fonts>
